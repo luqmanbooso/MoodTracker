@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMoods, createMood, deleteMood } from './services/api';
+import Navigation from './components/Navigation';
 import MoodForm from './components/MoodForm';
 import MoodList from './components/MoodList';
 import DailyQuote from './components/DailyQuote';
@@ -23,6 +24,9 @@ import AccountabilityDashboard from './components/AccountabilityDashboard';
 import HabitBuilder from './components/HabitBuilder';
 import GoalTracker from './components/GoalTracker';
 import MoodAssistant from './components/MoodAssistant';
+import Settings from './components/Settings';
+import ProgressTracker from './components/ProgressTracker';
+import UserGreeting from './components/UserGreeting';
 
 // Main App component wrapper with ThemeProvider
 function AppWithTheme() {
@@ -62,6 +66,10 @@ function AppContent() {
     const saved = localStorage.getItem('goals');
     return saved ? JSON.parse(saved) : [];
   });
+
+  const [showMoodForm, setShowMoodForm] = useState(false);
+  
+  const streak = computeStreak();
 
   // Fetch moods on component mount
   useEffect(() => {
@@ -178,6 +186,9 @@ function AppContent() {
       if (moodData.tags && moodData.tags.length > 0) {
         pointsSystem.awardPoints('ADD_TAGS');
       }
+
+      // Close the mood form if it was shown as modal
+      setShowMoodForm(false);
       
       // Uncomment when API is ready
       // const newMood = await createMood(moodData);
@@ -197,7 +208,7 @@ function AppContent() {
       
       // Uncomment when API is ready
       // await deleteMood(id);
-      // setMoods(prevMoods => prevMoods.filter(mood => mood._id !== id));
+      // setMoods(prevMoods => prevMoods.filter(mood._id !== id));
     } catch (err) {
       setError('Failed to delete mood. Please try again.');
       console.error(err);
@@ -224,7 +235,7 @@ function AppContent() {
   };
 
   // Add to App.jsx - computeStreak function
-  const computeStreak = () => {
+  function computeStreak() {
     if (moods.length === 0) return 0;
     
     let streak = 1;
@@ -334,419 +345,471 @@ function AppContent() {
     localStorage.setItem('goals', JSON.stringify(goals));
   }, [goals]);
 
-  // Add this function in the AppContent component
-  const requestNotificationPermission = () => {
-    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
-    }
-  };
+  const latestMood = moods.length > 0 ? {
+    mood: moods[0].mood,
+    time: new Date(moods[0].date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    date: new Date(moods[0].date).toLocaleDateString()
+  } : null;
 
-  // Modify the useEffect that sets up notifications
-  useEffect(() => {
-    // Set up reminder notification (without permission request)
-    const checkAndSendReminder = () => {
-      const lastMoodDate = moods[0]?.date ? new Date(moods[0].date) : null;
-      const now = new Date();
-      
-      // If no mood logged today and it's after 6pm, remind user
-      if (!lastMoodDate || lastMoodDate.toDateString() !== now.toDateString()) {
-        if (now.getHours() >= 18) {
-          // Only send notification if permission is already granted
-          if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("Mood Check-in", {
-              body: "Don't forget to log your mood today! 🙂",
-              icon: "/favicon.ico"
-            });
-          }
-        }
-      }
-    };
-    
-    // Check every hour
-    const interval = setInterval(checkAndSendReminder, 3600000);
-    return () => clearInterval(interval);
-  }, [moods]);
-
+  // Main render function
   return (
-    <div className={`min-h-screen ${theme.backgroundColor} py-8 px-4 transition-colors duration-300`}>
-      <div className="max-w-6xl mx-auto">
-        <header className="text-center mb-8">
-          <h1 className={`text-4xl font-bold text-${theme.primaryColor}-800 dark:text-${theme.primaryColor}-400`}>
-            Mood Tracker
-          </h1>
-          <p className={`mt-2 ${theme.textColor}`}>
-            Track and understand your emotional wellbeing
-          </p>
-        </header>
-        
-        {/* Points Display */}
-        <div className="mb-6">
-          <PointsDisplay 
-            points={pointsSystem.points}
-            level={pointsSystem.level}
-            nextLevel={pointsSystem.nextLevel}
-            progress={pointsSystem.progress}
-            showAnimation={pointsSystem.showAnimation}
-            justEarned={pointsSystem.justEarned}
-            levelUp={pointsSystem.levelUp}
-          />
-        </div>
-        
-        {/* Navigation Tabs */}
-        <div className="flex flex-wrap justify-center mb-8 gap-2">
-          <button 
-            onClick={() => setView('dashboard')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              view === 'dashboard' 
-                ? `bg-${theme.primaryColor}-600 text-white` 
-                : `bg-${theme.cardBg} text-gray-700 hover:bg-${theme.primaryColor}-100`
-            }`}
-          >
-            Dashboard
-          </button>
-          <button 
-            onClick={() => setView('log')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              view === 'log' 
-                ? `bg-${theme.primaryColor}-600 text-white` 
-                : `bg-${theme.cardBg} text-gray-700 hover:bg-${theme.primaryColor}-100`
-            }`}
-          >
-            Log Mood
-          </button>
-          <button 
-            onClick={() => setView('stats')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              view === 'stats' 
-                ? `bg-${theme.primaryColor}-600 text-white` 
-                : `bg-${theme.cardBg} text-gray-700 hover:bg-${theme.primaryColor}-100`
-            }`}
-          >
-            Insights
-          </button>
-          <button 
-            onClick={() => setView('challenges')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              view === 'challenges' 
-                ? `bg-${theme.primaryColor}-600 text-white` 
-                : `bg-${theme.cardBg} text-gray-700 hover:bg-${theme.primaryColor}-100`
-            }`}
-          >
-            Challenges
-          </button>
-          <button 
-            onClick={() => setView('resources')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              view === 'resources' 
-                ? `bg-${theme.primaryColor}-600 text-white` 
-                : `bg-${theme.cardBg} text-gray-700 hover:bg-${theme.primaryColor}-100`
-            }`}
-          >
-            Resources
-          </button>
-          <button 
-            onClick={() => setView('settings')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              view === 'settings' 
-                ? `bg-${theme.primaryColor}-600 text-white` 
-                : `bg-${theme.cardBg} text-gray-700 hover:bg-${theme.primaryColor}-100`
-            }`}
-          >
-            Settings
-          </button>
-          <button 
-            onClick={() => setView('progress')}
-            className={`px-4 py-2 rounded-lg font-medium ${
-              view === 'progress' 
-                ? `bg-${theme.primaryColor}-600 text-white` 
-                : `bg-${theme.cardBg} text-gray-700 hover:bg-${theme.primaryColor}-100`
-            }`}
-          >
-            Progress
-          </button>
-        </div>
-        
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Sidebar Navigation */}
+      <Navigation activeView={view} setView={setView} />
+      
+      {/* Main Content - FIXED WIDTH */}
+      <div className="flex-1 md:ml-64 transition-all duration-300">
+        <div className="pt-16 md:pt-4 px-4 md:px-6 lg:px-8 pb-20">
+          {/* Top Bar with Points Display */}
+          <div className="sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 py-3 mb-6">
+            <div className="flex justify-between items-center">
+              <h1 className={`text-2xl font-bold text-gray-800 dark:text-gray-100`}>
+                {view.charAt(0).toUpperCase() + view.slice(1)}
+              </h1>
+              <div className="flex items-center gap-4">
+                <PointsDisplay 
+                  points={pointsSystem.points}
+                  level={pointsSystem.levelNumber || (typeof pointsSystem.level === 'object' ? pointsSystem.level.level : pointsSystem.level)}
+                  nextLevel={pointsSystem.nextLevel}
+                  progress={pointsSystem.progress}
+                  showAnimation={pointsSystem.showAnimation}
+                  justEarned={pointsSystem.justEarned}
+                  levelUp={pointsSystem.levelUp}
+                />
+              </div>
+            </div>
           </div>
-        )}
-        
-        {/* Dashboard View */}
-        {view === 'dashboard' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Daily Quote */}
-            <div className="col-span-1 lg:col-span-2">
-              <DailyQuote />
+          
+          {/* Error message display */}
+          {error && (
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6 shadow-md">
+              <div className="flex items-center">
+                <svg className="h-6 w-6 mr-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{error}</span>
+              </div>
             </div>
-            
-            {/* Daily Challenge */}
-            <div className="col-span-1">
-              <DailyChallenge 
-                onComplete={handleCompleteChallenge} 
-                completedChallenges={completedChallenges}
+          )}
+          
+          {/* Dashboard View */}
+          {view === 'dashboard' && (
+            <>
+              {/* Welcome Hero Section */}
+              <UserGreeting 
+                moods={moods} 
+                onLogMood={(mood) => {
+                  if (mood) {
+                    handleAddMood({ 
+                      mood: mood,
+                      customMood: '',
+                      intensity: 5,
+                      note: '',
+                      activities: [],
+                      tags: []
+                    });
+                  } else {
+                    setShowMoodForm(true);
+                  }
+                }} 
               />
-            </div>
-            
-            {/* Quick Mood Entry */}
-            <div className={`${theme.cardBg} rounded-lg shadow-md p-6 col-span-1 lg:col-span-2`}>
-              <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-                How are you feeling?
-              </h2>
-              <MoodForm 
-                addMood={handleAddMood} 
-                isLoading={loading} 
-                customMoodCategories={customMoodCategories}
-                simplified={true} // Simplified version for dashboard
-              />
-            </div>
-            
-            {/* Mood Stats Summary */}
-            <div className="col-span-1">
-              {moods.length > 0 ? (
-                <MoodStats moods={moods} simplified={true} />
-              ) : (
-                <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-                  <h2 className={`text-xl font-semibold mb-2 ${theme.textColor}`}>
-                    Welcome!
-                  </h2>
-                  <p className="text-gray-600">
-                    Log your first mood to start seeing insights and trends.
-                  </p>
+
+              {/* Three Column Dashboard Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Daily Quote */}
+                <div className="col-span-1 lg:col-span-2">
+                  <DailyQuote />
+                </div>
+                
+                {/* Daily Challenge */}
+                <div className="col-span-1">
+                  <DailyChallenge 
+                    onComplete={handleCompleteChallenge} 
+                    completedChallenges={completedChallenges}
+                  />
+                </div>
+                
+                {/* Mood Trends */}
+                <div className="col-span-1 lg:col-span-2">
+                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
+                    <div className="p-5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                      <h2 className={`text-xl font-bold ${theme.textColor}`}>Mood Trends</h2>
+                      <button 
+                        onClick={() => setView('insights')}
+                        className={`text-sm text-${theme.primaryColor}-600 hover:text-${theme.primaryColor}-800 dark:text-${theme.primaryColor}-400 dark:hover:text-${theme.primaryColor}-300`}
+                      >
+                        View Details
+                      </button>
+                    </div>
+                    <div className="p-5">
+                      {moods.length > 0 ? (
+                        <MoodChart moods={moods} simplified={true} />
+                      ) : (
+                        <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                          <p>Log your mood to see trends over time</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Mood Stats */}
+                <div className="col-span-1">
+                  {moods.length > 0 ? (
+                    <MoodStats moods={moods} simplified={true} />
+                  ) : (
+                    <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 p-6`}>
+                      <h2 className={`text-xl font-bold mb-4 ${theme.textColor}`}>
+                        No Data Yet
+                      </h2>
+                      <p className="text-gray-600 dark:text-gray-400 mb-6">
+                        Start tracking your mood to see personalized stats and insights.
+                      </p>
+                      <button
+                        onClick={() => setShowMoodForm(true)}
+                        className={`w-full py-3 bg-${theme.primaryColor}-600 hover:bg-${theme.primaryColor}-700 text-white rounded-lg font-medium transition-colors`}
+                      >
+                        Log Your First Mood
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Weekly Reflection */}
+                {moods.length >= 3 && (
+                  <div className="col-span-1 lg:col-span-2">
+                    <WeeklyReflection moods={moods} />
+                  </div>
+                )}
+                
+                {/* Resource Recommendations */}
+                <div className="col-span-1">
+                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
+                    <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                      <h2 className={`text-xl font-bold ${theme.textColor}`}>Recommended For You</h2>
+                    </div>
+                    <div className="p-5">
+                      <ResourceRecommendations moods={moods} customMoodCategories={customMoodCategories} />
+                      <div className="mt-4 text-center">
+                        <button
+                          onClick={() => setView('resources')}
+                          className={`px-4 py-2 bg-${theme.primaryColor}-100 text-${theme.primaryColor}-700 dark:bg-${theme.primaryColor}-900/20 dark:text-${theme.primaryColor}-300 rounded-lg hover:bg-${theme.primaryColor}-200 dark:hover:bg-${theme.primaryColor}-900/40 transition font-medium`}
+                        >
+                          View All Resources
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Progress Summary */}
+                <div className="col-span-1 lg:col-span-3">
+                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
+                    <div className="p-5 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                      <h2 className={`text-xl font-bold ${theme.textColor}`}>Progress Tracker</h2>
+                      <button 
+                        onClick={() => setView('progress')}
+                        className={`text-sm text-${theme.primaryColor}-600 hover:text-${theme.primaryColor}-800 dark:text-${theme.primaryColor}-400 dark:hover:text-${theme.primaryColor}-300`}
+                      >
+                        Manage
+                      </button>
+                    </div>
+                    <div className="p-5">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Habit Completion */}
+                        <div className={`p-4 rounded-lg bg-${theme.primaryColor}-50 dark:bg-${theme.primaryColor}-900/10 border border-${theme.primaryColor}-100 dark:border-${theme.primaryColor}-900/20`}>
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium text-gray-800 dark:text-gray-200">Habits</h3>
+                            <span className={`text-${theme.primaryColor}-600 dark:text-${theme.primaryColor}-400 text-lg font-bold`}>
+                              {habits.filter(h => h.completed).length}/{habits.length}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            {habits.length > 0 
+                              ? `${Math.round((habits.filter(h => h.completed).length / habits.length) * 100)}% completed today` 
+                              : 'No habits set up yet'}
+                          </p>
+                          <div className="mt-3">
+                            <button
+                              onClick={() => setView('progress')}
+                              className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                            >
+                              {habits.length > 0 ? 'Check in' : 'Create habit'}
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Goals Completion */}
+                        <div className={`p-4 rounded-lg bg-${theme.primaryColor}-50 dark:bg-${theme.primaryColor}-900/10 border border-${theme.primaryColor}-100 dark:border-${theme.primaryColor}-900/20`}>
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium text-gray-800 dark:text-gray-200">Goals</h3>
+                            <span className={`text-${theme.primaryColor}-600 dark:text-${theme.primaryColor}-400 text-lg font-bold`}>
+                              {goals.filter(g => g.completed).length}/{goals.length}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            {goals.length > 0 
+                              ? `${Math.round((goals.filter(g => g.completed).length / goals.length) * 100)}% completed` 
+                              : 'No goals set up yet'}
+                          </p>
+                          <div className="mt-3">
+                            <button
+                              onClick={() => setView('progress')}
+                              className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                            >
+                              {goals.length > 0 ? 'Review' : 'Set a goal'}
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {/* Points */}
+                        <div className={`p-4 rounded-lg bg-${theme.primaryColor}-50 dark:bg-${theme.primaryColor}-900/10 border border-${theme.primaryColor}-100 dark:border-${theme.primaryColor}-900/20`}>
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium text-gray-800 dark:text-gray-200">Points</h3>
+                            <span className={`text-${theme.primaryColor}-600 dark:text-${theme.primaryColor}-400 text-lg font-bold`}>
+                              {pointsSystem.totalPoints}
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                            Earn points by completing habits and goals
+                          </p>
+                          <div className="mt-3">
+                            <button
+                              onClick={() => setView('progress')}
+                              className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
+                            >
+                              View Points
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+          
+          {/* Other views - just include the basic structure here */}
+          {view === 'log' && (
+            <div className="animate-fade-in">
+              <div className={`mb-6 p-6 rounded-xl bg-gradient-to-r from-${theme.primaryColor}-600 via-${theme.primaryColor}-500 to-${theme.primaryColor}-700 text-white shadow-xl`}>
+                <h1 className="text-3xl font-bold mb-2">How Are You Feeling Today?</h1>
+                <p className="opacity-90">Track your emotions to build self-awareness and identify patterns.</p>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
+                  <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                    <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
+                      <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-2 rounded-lg mr-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </span>
+                      Log Your Mood
+                    </h2>
+                  </div>
+                  <div className="p-6">
+                    <MoodForm 
+                      addMood={handleAddMood} 
+                      isLoading={loading} 
+                      customMoodCategories={customMoodCategories}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  {moods.length > 0 && (
+                    <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
+                      <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                        <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
+                          <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-2 rounded-lg mr-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                          </span>
+                          Personalized Tips
+                        </h2>
+                      </div>
+                      <div className="p-6">
+                        <PersonalizedTips moods={moods} />
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
+                    <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                      <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
+                        <span className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-2 rounded-lg mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </span>
+                        Your Mood History
+                      </h2>
+                    </div>
+                    <div className="p-6">
+                      {loading ? (
+                        <div className="flex justify-center items-center h-40">
+                          <div className={`animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-${theme.primaryColor}-500`}></div>
+                        </div>
+                      ) : moods.length === 0 ? (
+                        <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg text-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          <p className="text-gray-600 dark:text-gray-400">No mood entries yet. Add your first mood!</p>
+                        </div>
+                      ) : (
+                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                          <MoodList moods={moods} deleteMood={handleDeleteMood} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {moods.length > 0 && (
+                <div className="mt-6">
+                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
+                    <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                      <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
+                        <span className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white p-2 rounded-lg mr-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                        </span>
+                        Quick Mood Insights
+                      </h2>
+                    </div>
+                    <div className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <MoodChart moods={moods} simplified={true} />
+                        </div>
+                        <div>
+                          <MoodStats moods={moods} simplified={true} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-            
-            {/* Random Act of Kindness */}
-            <div className="col-span-1">
-              <KindnessGenerator mood={moods[0]?.mood || 'Okay'} />
-            </div>
-            
-            {/* Mood Prediction */}
-            {moods.length >= 5 && (
-              <div className="col-span-1">
-                <MoodPrediction moods={moods} />
+          )}
+          
+          {/* Insights View */}
+          {view === 'insights' && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 p-6`}>
+                  <h2 className={`text-xl font-bold mb-4 ${theme.textColor}`}>
+                    Mood Trends
+                  </h2>
+                  <MoodChart moods={moods} />
+                </div>
               </div>
-            )}
-            
-            {/* Resource Recommendations - ADD THIS NEW SECTION HERE */}
-            <div className="col-span-1">
-              <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-                <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-                  For You
-                </h2>
-                <ResourceRecommendations moods={moods} customMoodCategories={customMoodCategories} />
-                <div className="mt-4 text-center">
-                  <button
-                    onClick={() => setView('resources')}
-                    className={`px-4 py-2 bg-${theme.primaryColor}-600 text-white rounded hover:bg-${theme.primaryColor}-700 transition`}
-                  >
-                    View All Resources
-                  </button>
+              
+              <div>
+                <MoodStats moods={moods} />
+              </div>
+              
+              <div className="lg:col-span-3">
+                <MoodAnalysis moods={moods} />
+              </div>
+              
+              <div className="lg:col-span-2">
+                <WeeklyReflection moods={moods} />
+              </div>
+              
+              <div>
+                <MoodAchievements moods={moods} />
+              </div>
+            </div>
+          )}
+          
+          {/* Other views would go here */}
+          {/* ... */}
+
+          {/* Modal for logging mood */}
+          {showMoodForm && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+                <div className="p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">How are you feeling?</h2>
+                    <button 
+                      onClick={() => setShowMoodForm(false)}
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <MoodForm 
+                    addMood={(mood) => {
+                      handleAddMood(mood);
+                      setShowMoodForm(false);
+                    }}
+                    isLoading={loading}
+                    customMoodCategories={customMoodCategories}
+                  />
                 </div>
               </div>
             </div>
+          )}
 
-            {/* Recent Moods */}
-            <div className="col-span-1 lg:col-span-3">
-              <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-                <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-                  Recent Moods
-                </h2>
-                {loading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <div className={`animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-${theme.primaryColor}-500`}></div>
-                  </div>
-                ) : moods.length === 0 ? (
-                  <div className="bg-gray-50 p-6 rounded-lg text-center">
-                    <p className="text-gray-600">No mood entries yet. Add your first mood!</p>
-                  </div>
-                ) : (
-                  <div className="max-h-60 overflow-y-auto">
-                    <MoodList moods={moods.slice(0, 5)} deleteMood={handleDeleteMood} />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Streak Display */}
-            <div className="mb-4 text-center">
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 inline-flex items-center">
-                <span className="text-2xl mr-2">🔥</span>
-                <div>
-                  <div className="font-bold text-amber-800">{computeStreak()} day streak</div>
-                  <div className="text-xs text-amber-600">Keep the momentum going!</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="col-span-1">
+          {/* Add dedicated Chat view */}
+          {view === 'chat' && (
+            <div className="h-[calc(100vh-8rem)]">
               <MoodAssistant 
-                moods={moods} 
-                habits={habits} 
-                goals={goals} 
+                moods={moods}
+                habits={habits}
+                goals={goals}
                 pointsSystem={pointsSystem}
                 setView={setView}
+                expanded={true}
+                fullPage={true}
               />
             </div>
-          </div>
-        )}
-        
-        {/* Log Mood View */}
-        {view === 'log' && (
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-              <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-                Log Your Mood
-              </h2>
-              <MoodForm 
-                addMood={handleAddMood} 
-                isLoading={loading} 
-                customMoodCategories={customMoodCategories}
-              />
-            </div>
-            
-            <div>
-              {/* Personalized Tips */}
-              {moods.length > 0 && (
-                <div className="mb-6">
-                  <PersonalizedTips moods={moods} />
-                </div>
-              )}
-              
-              {/* Mood History */}
-              <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-                <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-                  Your Mood History
-                </h2>
-                {loading ? (
-                  <div className="flex justify-center items-center h-40">
-                    <div className={`animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-${theme.primaryColor}-500`}></div>
-                  </div>
-                ) : moods.length === 0 ? (
-                  <div className="bg-gray-50 p-6 rounded-lg text-center">
-                    <p className="text-gray-600">No mood entries yet. Add your first mood!</p>
-                  </div>
-                ) : (
-                  <div className="max-h-96 overflow-y-auto">
-                    <MoodList moods={moods} deleteMood={handleDeleteMood} />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Stats/Insights View */}
-        {view === 'stats' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-                <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-                  Mood Trends
-                </h2>
-                <MoodChart moods={moods} />
-              </div>
-            </div>
-            
-            <div>
-              <MoodStats moods={moods} />
-            </div>
-            
-            <div className="lg:col-span-3">
-              <MoodAnalysis moods={moods} />
-            </div>
-            
-            <div className="lg:col-span-2">
-              <WeeklyReflection moods={moods} />
-            </div>
-            
-            <div>
-              <MoodAchievements moods={moods} />
-            </div>
-          </div>
-        )}
-        
-        {/* Challenges View */}
-        {view === 'challenges' && (
-          <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-            <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-              Daily Challenges
-            </h2>
-            <DailyChallenge 
-              onComplete={handleCompleteChallenge} 
-              completedChallenges={completedChallenges}
-              showHistory={true}
-            />
-          </div>
-        )}
-        
-        {/* Resources View */}
-        {view === 'resources' && (
-          <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-            <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-              Mental Health Resources
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Access helpful resources for managing your mental health. If you're in crisis, please use the 
-              emergency contacts at the top.
-            </p>
-            <ResourcesHub userMood={moods[0]?.mood || 'Okay'} />
-          </div>
-        )}
-        
-        {/* Settings View */}
-        {view === 'settings' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-              <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-                Custom Mood Categories
-              </h2>
-              <CustomMoodManager 
-                categories={customMoodCategories}
-                onAdd={handleAddCustomMood}
-                onRemove={handleRemoveCustomMood}
-              />
-            </div>
-            
-            <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-              <h2 className={`text-xl font-semibold mb-4 ${theme.textColor}`}>
-                Appearance
-              </h2>
-              <ThemeSettings />
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Progress & Accountability View */}
-        {view === 'progress' && (
-          <div className="space-y-6">
-            <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-              <AccountabilityDashboard 
-                moods={moods} 
-                habits={habits} 
-                goals={goals}
-              />
-            </div>
-            
-            <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-              <HabitBuilder 
-                onAddHabit={handleAddHabit}
-                onCompleteHabit={handleCompleteHabit}
-                userHabits={habits}
-              />
-            </div>
-            
-            <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
-              <GoalTracker 
-                goals={goals}
-                onAddGoal={handleAddGoal}
-                onUpdateGoal={handleUpdateGoal}
-                onDeleteGoal={(id) => setGoals(prev => prev.filter(goal => goal.id !== id))}
-              />
-            </div>
-          </div>
-        )}
+          {/* Resources View */}
+          {view === 'resources' && (
+            <ResourcesHub 
+              moods={moods}
+              customMoodCategories={customMoodCategories}
+            />
+          )}
+
+          {/* Settings View */}
+          {view === 'settings' && (
+            <Settings
+              customMoodCategories={customMoodCategories}
+              onAddCustomMood={handleAddCustomMood}
+              onRemoveCustomMood={handleRemoveCustomMood}
+            />
+          )}
+
+          {/* Progress View */}
+          {view === 'progress' && (
+            <ProgressTracker
+              habits={habits}
+              goals={goals}
+              onAddHabit={handleAddHabit}
+              onCompleteHabit={handleCompleteHabit}
+              onAddGoal={handleAddGoal}
+              onUpdateGoal={handleUpdateGoal}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

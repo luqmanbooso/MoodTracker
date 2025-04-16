@@ -142,16 +142,27 @@ const PointsSystem = ({ userId = 'default-user' }) => {
     return Math.min(100, Math.round((pointsEarnedSinceLastLevel / pointsNeededForNextLevel) * 100));
   };
 
+  // Make sure you return formatted values that can be directly rendered
   return {
     points,
-    level,
-    nextLevel,
+    // Instead of just returning the level object
+    level: {
+      level: level.level, // Numeric value
+      name: level.name,   // String value
+      threshold: level.threshold,
+      reward: level.reward
+    },
+    // Add these pre-formatted properties for direct rendering
+    levelNumber: level.level,
+    levelName: level.name,
+    nextLevel: nextLevel ? nextLevel.threshold : null,
     progress: calculateProgress(),
     pointsHistory,
     awardPoints,
     showAnimation,
     justEarned,
-    levelUp
+    levelUp,
+    totalPoints: points
   };
 };
 

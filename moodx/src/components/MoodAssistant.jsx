@@ -2,7 +2,15 @@ import { useState, useRef, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { getAIResponse } from '../services/aiService';
 
-const MoodAssistant = ({ moods = [], habits = [], goals = [], pointsSystem, setView }) => {
+const MoodAssistant = ({ 
+  moods = [], 
+  habits = [], 
+  goals = [], 
+  pointsSystem, 
+  setView,
+  expanded = false,
+  fullPage = false
+}) => {
   const { theme } = useTheme();
   const [messages, setMessages] = useState([
     { 
@@ -14,7 +22,6 @@ const MoodAssistant = ({ moods = [], habits = [], goals = [], pointsSystem, setV
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState(null);
   const [aiStatus, setAiStatus] = useState('active'); // Always set to 'active'
   const [aiSource, setAiSource] = useState('openrouter'); // Always use 'openrouter'
@@ -296,7 +303,10 @@ const MoodAssistant = ({ moods = [], habits = [], goals = [], pointsSystem, setV
   };
 
   return (
-    <div className={`${expanded ? 'fixed bottom-0 right-0 w-full md:w-96 h-[70vh] z-50' : 'h-[480px]'} ${theme.cardBg} rounded-lg shadow-xl overflow-hidden transition-all duration-300 flex flex-col`}>
+    <div className={`
+      ${fullPage ? 'h-full' : expanded ? 'fixed bottom-0 right-0 w-full md:w-96 h-[70vh] z-50' : 'h-[480px]'} 
+      ${theme.cardBg} rounded-lg shadow-xl overflow-hidden transition-all duration-300 flex flex-col
+    `}>
       {/* Header */}
       <div className={`bg-${theme.primaryColor}-700 text-white p-4 flex justify-between items-center`}>
         <div className="flex items-center">
@@ -310,20 +320,23 @@ const MoodAssistant = ({ moods = [], habits = [], goals = [], pointsSystem, setV
             <p className="text-xs opacity-80">Straight talk, no excuses</p>
           </div>
         </div>
-        <button 
-          onClick={() => setExpanded(!expanded)}
-          className="text-white p-1 hover:bg-white hover:bg-opacity-20 rounded"
-        >
-          {expanded ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414-1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-            </svg>
-          )}
-        </button>
+        
+        {!fullPage && (
+          <button 
+            onClick={() => setExpanded(!expanded)}
+            className="text-white p-1 hover:bg-white hover:bg-opacity-20 rounded"
+          >
+            {expanded ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414-1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+              </svg>
+            )}
+          </button>
+        )}
       </div>
       {aiSource === 'openrouter' && (
         <div className="px-3 py-1 bg-purple-50 text-purple-800 text-xs rounded flex items-center gap-1 mb-2">
