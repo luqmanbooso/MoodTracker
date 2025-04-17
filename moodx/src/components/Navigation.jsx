@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 
-const Navigation = ({ activeView, setView }) => {
-  const { theme } = useTheme();
+const Navigation = ({ activeView, setView, openSettingsModal }) => {
+  const { darkMode } = useTheme();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Primary color based on theme
+  const primaryColor = darkMode ? 'emerald' : 'orange';
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: 'home' },
@@ -11,8 +14,7 @@ const Navigation = ({ activeView, setView }) => {
     { id: 'log', label: 'Log Mood', icon: 'plus-circle' },
     { id: 'progress', label: 'Progress', icon: 'check-circle' },
     { id: 'chat', label: 'Mindset Coach', icon: 'chat-alt-2' },
-    { id: 'resources', label: 'Resources', icon: 'book-open' },
-    { id: 'settings', label: 'Settings', icon: 'cog' }
+    { id: 'resources', label: 'Resources', icon: 'book-open' }
   ];
 
   // Map of Heroicon paths
@@ -33,10 +35,10 @@ const Navigation = ({ activeView, setView }) => {
         {/* App Logo */}
         <div className={`p-6 border-b border-gray-200 dark:border-gray-800`}>
           <div className="flex items-center">
-            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-${theme.primaryColor}-500 to-${theme.primaryColor}-700 flex items-center justify-center text-white font-bold text-xl`}>
+            <div className={`w-10 h-10 rounded-lg bg-gradient-to-br from-${primaryColor}-500 to-${primaryColor}-700 flex items-center justify-center text-white font-bold text-xl`}>
               M<span className="text-yellow-300">X</span>
             </div>
-            <h1 className={`ml-3 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-${theme.primaryColor}-600 to-${theme.primaryColor}-400`}>
+            <h1 className={`ml-3 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-${primaryColor}-600 to-${primaryColor}-400`}>
               MoodX
             </h1>
           </div>
@@ -50,7 +52,7 @@ const Navigation = ({ activeView, setView }) => {
               onClick={() => setView(item.id)}
               className={`w-full flex items-center px-6 py-3 text-left transition-all duration-200 ${
                 activeView === item.id 
-                  ? `text-${theme.primaryColor}-600 dark:text-${theme.primaryColor}-400 bg-${theme.primaryColor}-50 dark:bg-gray-800 border-r-4 border-${theme.primaryColor}-500` 
+                  ? `text-${primaryColor}-600 dark:text-${primaryColor}-400 bg-${primaryColor}-50 dark:bg-gray-800 border-r-4 border-${primaryColor}-500` 
                   : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
             >
@@ -60,6 +62,17 @@ const Navigation = ({ activeView, setView }) => {
               <span>{item.label}</span>
             </button>
           ))}
+          
+          {/* Settings button - now opens modal instead */}
+          <button
+            onClick={openSettingsModal}
+            className={`w-full flex items-center px-6 py-3 text-left transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={iconPaths['cog']} />
+            </svg>
+            <span>Settings</span>
+          </button>
         </nav>
       </div>
       
@@ -67,10 +80,10 @@ const Navigation = ({ activeView, setView }) => {
       <div className="md:hidden fixed top-0 left-0 right-0 bg-white dark:bg-gray-900 shadow-md z-30">
         <div className="flex items-center justify-between p-4">
           <div className="flex items-center">
-            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br from-${theme.primaryColor}-500 to-${theme.primaryColor}-700 flex items-center justify-center text-white font-bold text-sm`}>
+            <div className={`w-8 h-8 rounded-lg bg-gradient-to-br from-${primaryColor}-500 to-${primaryColor}-700 flex items-center justify-center text-white font-bold text-sm`}>
               M<span className="text-yellow-300">X</span>
             </div>
-            <h1 className={`ml-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-${theme.primaryColor}-600 to-${theme.primaryColor}-400`}>
+            <h1 className={`ml-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-${primaryColor}-600 to-${primaryColor}-400`}>
               MoodX
             </h1>
           </div>
@@ -96,7 +109,7 @@ const Navigation = ({ activeView, setView }) => {
                 }}
                 className={`w-full flex items-center px-4 py-3 text-left transition-all duration-200 ${
                   activeView === item.id 
-                    ? `text-${theme.primaryColor}-600 dark:text-${theme.primaryColor}-400 bg-${theme.primaryColor}-50 dark:bg-gray-800 border-l-4 border-${theme.primaryColor}-500` 
+                    ? `text-${primaryColor}-600 dark:text-${primaryColor}-400 bg-${primaryColor}-50 dark:bg-gray-800 border-l-4 border-${primaryColor}-500` 
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
                 }`}
               >
@@ -106,6 +119,20 @@ const Navigation = ({ activeView, setView }) => {
                 <span>{item.label}</span>
               </button>
             ))}
+            
+            {/* Settings button for mobile */}
+            <button
+              onClick={() => {
+                openSettingsModal();
+                setIsMobileNavOpen(false);
+              }}
+              className="w-full flex items-center px-4 py-3 text-left transition-all duration-200 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={iconPaths['cog']} />
+              </svg>
+              <span>Settings</span>
+            </button>
           </nav>
         )}
       </div>

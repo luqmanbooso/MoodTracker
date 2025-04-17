@@ -39,7 +39,7 @@ function AppWithTheme() {
 
 // Main App content
 function AppContent() {
-  const { theme } = useTheme();
+  const { theme, darkMode } = useTheme();
   const [moods, setMoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,6 +70,9 @@ function AppContent() {
   const [showMoodForm, setShowMoodForm] = useState(false);
   
   const streak = computeStreak();
+
+  // Add this state for controlling the settings modal
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
   // Fetch moods on component mount
   useEffect(() => {
@@ -351,14 +354,16 @@ function AppContent() {
     date: new Date(moods[0].date).toLocaleDateString()
   } : null;
 
-  // Main render function
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Sidebar Navigation */}
-      <Navigation activeView={view} setView={setView} />
+    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'}`}>
+      <Navigation 
+        activeView={view} 
+        setView={setView}
+        // This is the important part - pass the function to open the modal
+        openSettingsModal={() => setIsSettingsModalOpen(true)}
+      />
       
-      {/* Main Content - FIXED WIDTH */}
-      <div className="flex-1 md:ml-64 transition-all duration-300">
+      <div className="md:ml-64 pt-16 md:pt-0">
         <div className="pt-16 md:pt-4 px-4 md:px-6 lg:px-8 pb-20">
           {/* Top Bar with Points Display */}
           <div className="sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 py-3 mb-6">
@@ -811,6 +816,15 @@ function AppContent() {
           )}
         </div>
       </div>
+
+      {/* Settings Modal */}
+      <Settings 
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        customMoodCategories={customMoodCategories}
+        onAddCustomMood={handleAddCustomMood}
+        onRemoveCustomMood={handleRemoveCustomMood}
+      />
     </div>
   );
 }
