@@ -16,6 +16,17 @@ const MoodTracker = ({ onShowMoodForm }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Create theme-aware styles object
+  const theme = {
+    primaryColor: darkMode ? 'emerald' : 'orange',
+    cardBg: darkMode ? 'bg-gray-800' : 'bg-white',
+    textColor: darkMode ? 'text-white' : 'text-gray-800',
+    secondaryText: darkMode ? 'text-gray-300' : 'text-gray-600',
+    borderColor: darkMode ? 'border-gray-700' : 'border-gray-200',
+    buttonBg: darkMode ? 'bg-emerald-500' : 'bg-orange-500',
+    buttonHover: darkMode ? 'hover:bg-emerald-600' : 'hover:bg-orange-600',
+  };
+
   // Fetch moods on component mount
   useEffect(() => {
     fetchMoods();
@@ -80,18 +91,16 @@ const MoodTracker = ({ onShowMoodForm }) => {
 
   return (
     <div className="animate-fadeIn">
-      <div className={`mb-6 p-6 rounded-xl ${darkMode 
-        ? 'bg-gradient-to-r from-emerald-800 to-emerald-900 text-white' 
-        : 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white'} shadow-xl`}
-      >
+      {/* FIX: Use theme primary color for gradient instead of hardcoded emerald */}
+      <div className={`mb-6 p-6 rounded-xl bg-gradient-to-r from-${theme.primaryColor}-600 via-${theme.primaryColor}-500 to-${theme.primaryColor}-700 text-white shadow-xl`}>
         <h1 className="text-3xl font-bold mb-2">How Are You Feeling Today?</h1>
         <p className="opacity-90">Track your emotions to build self-awareness and identify patterns.</p>
       </div>
       
       <div className="grid md:grid-cols-2 gap-6">
-        <div className={`rounded-xl shadow-lg overflow-hidden border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-          <div className={`p-5 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center`}>
+        <div className={`rounded-xl shadow-lg overflow-hidden border ${theme.cardBg} ${theme.borderColor}`}>
+          <div className={`p-5 border-b ${theme.borderColor}`}>
+            <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
               <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-2 rounded-lg mr-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -107,9 +116,9 @@ const MoodTracker = ({ onShowMoodForm }) => {
         
         <div className="space-y-6">
           {moods.length > 0 && (
-            <div className={`rounded-xl shadow-lg overflow-hidden border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-              <div className={`p-5 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-                <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center`}>
+            <div className={`rounded-xl shadow-lg overflow-hidden border ${theme.cardBg} ${theme.borderColor}`}>
+              <div className={`p-5 border-b ${theme.borderColor}`}>
+                <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
                   <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-2 rounded-lg mr-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -124,9 +133,9 @@ const MoodTracker = ({ onShowMoodForm }) => {
             </div>
           )}
           
-          <div className={`rounded-xl shadow-lg overflow-hidden border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <div className={`p-5 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center`}>
+          <div className={`rounded-xl shadow-lg overflow-hidden border ${theme.cardBg} ${theme.borderColor}`}>
+            <div className={`p-5 border-b ${theme.borderColor}`}>
+              <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
                 <span className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-2 rounded-lg mr-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -138,17 +147,19 @@ const MoodTracker = ({ onShowMoodForm }) => {
             <div className="p-6">
               {loading ? (
                 <div className="flex justify-center items-center h-40">
-                  <div className={`animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 ${darkMode ? 'border-emerald-400' : 'border-emerald-500'}`}></div>
+                  {/* FIX: Use theme primary color for spinner */}
+                  <div className={`animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-${theme.primaryColor}-500`}></div>
                 </div>
               ) : moods.length === 0 ? (
                 <div className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-6 rounded-lg text-center`}>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
-                  <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>No mood entries yet. Add your first mood!</p>
+                  <p className={theme.secondaryText}>No mood entries yet. Add your first mood!</p>
+                  {/* FIX: Use theme button colors */}
                   <button 
                     onClick={onShowMoodForm}
-                    className="mt-4 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"
+                    className={`mt-4 px-4 py-2 ${theme.buttonBg} ${theme.buttonHover} text-white rounded-lg`}
                   >
                     Log First Mood
                   </button>
@@ -165,9 +176,9 @@ const MoodTracker = ({ onShowMoodForm }) => {
       
       {moods.length > 0 && (
         <div className="mt-6">
-          <div className={`rounded-xl shadow-lg overflow-hidden border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-            <div className={`p-5 border-b ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center`}>
+          <div className={`rounded-xl shadow-lg overflow-hidden border ${theme.cardBg} ${theme.borderColor}`}>
+            <div className={`p-5 border-b ${theme.borderColor}`}>
+              <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
                 <span className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white p-2 rounded-lg mr-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -199,9 +210,10 @@ const MoodTracker = ({ onShowMoodForm }) => {
             </svg>
             <span>{error}</span>
           </div>
+          {/* FIX: Use theme button colors */}
           <button 
             onClick={fetchMoods} 
-            className="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+            className={`mt-2 px-3 py-1 ${theme.buttonBg} ${theme.buttonHover} text-white rounded`}
           >
             Retry
           </button>

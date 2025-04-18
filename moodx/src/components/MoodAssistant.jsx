@@ -11,7 +11,7 @@ const MoodAssistant = ({
   expanded = false,
   fullPage = false
 }) => {
-  const { theme } = useTheme();
+  const { theme, darkMode } = useTheme();
   const [messages, setMessages] = useState([
     { 
       id: 1, 
@@ -27,6 +27,17 @@ const MoodAssistant = ({
   const [aiSource, setAiSource] = useState('openrouter'); // Always use 'openrouter'
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+
+  const styles = {
+    primaryColor: darkMode ? 'emerald' : 'orange',
+    assistantBg: darkMode ? 'bg-gray-800' : 'bg-white',
+    assistantBorder: darkMode ? 'border-gray-700' : 'border-gray-200',
+    messageUser: darkMode ? 'bg-emerald-500/20 text-white' : 'bg-orange-500/10 text-gray-800',
+    messageBot: darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800',
+    inputBg: darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800',
+    headerText: darkMode ? 'text-white' : 'text-gray-800',
+    buttonPrimary: darkMode ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600',
+  };
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -305,13 +316,13 @@ const MoodAssistant = ({
   return (
     <div className={`
       ${fullPage ? 'h-full' : expanded ? 'fixed bottom-0 right-0 w-full md:w-96 h-[70vh] z-50' : 'h-[480px]'} 
-      ${theme.cardBg} rounded-lg shadow-xl overflow-hidden transition-all duration-300 flex flex-col
+      ${styles.assistantBg} ${styles.assistantBorder} rounded-lg shadow-xl overflow-hidden transition-all duration-300 flex flex-col
     `}>
       {/* Header */}
-      <div className={`bg-${theme.primaryColor}-700 text-white p-4 flex justify-between items-center`}>
+      <div className={`bg-${styles.primaryColor}-700 ${styles.headerText} p-4 flex justify-between items-center`}>
         <div className="flex items-center">
           <div className="bg-white rounded-full p-1 mr-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-${theme.primaryColor}-700`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-${styles.primaryColor}-700`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
           </div>
@@ -357,17 +368,17 @@ const MoodAssistant = ({
             <div 
               className={`max-w-[85%] p-3 rounded-lg ${
                 message.type === 'user' 
-                  ? `bg-${theme.primaryColor}-100 text-gray-800` 
+                  ? styles.messageUser
                   : message.isError 
                     ? 'bg-red-100 text-red-800'
-                    : `bg-${theme.primaryColor}-600 text-white`
+                    : styles.messageBot
               }`}
             >
               <div className="text-sm">{message.text}</div>
               {message.action && (
                 <button
                   onClick={() => handleActionClick(message.action)}
-                  className={`mt-2 px-3 py-1 bg-${theme.primaryColor}-700 bg-opacity-30 hover:bg-opacity-50 text-white text-xs rounded-full transition`}
+                  className={`mt-2 px-3 py-1 bg-${styles.primaryColor}-700 bg-opacity-30 hover:bg-opacity-50 text-white text-xs rounded-full transition`}
                 >
                   Go to {message.action === 'stats' ? 'insights' : message.action}
                 </button>
@@ -380,7 +391,7 @@ const MoodAssistant = ({
         ))}
         {isTyping && (
           <div className="flex justify-start">
-            <div className={`max-w-[85%] p-3 rounded-lg bg-${theme.primaryColor}-600 text-white`}>
+            <div className={`max-w-[85%] p-3 rounded-lg ${styles.messageBot}`}>
               <div className="flex space-x-1">
                 <div className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '0ms' }}></div>
                 <div className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -400,13 +411,13 @@ const MoodAssistant = ({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Talk to your coach..."
-            className="flex-1 p-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`flex-1 p-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${styles.inputBg}`}
             ref={inputRef}
           />
           <button
             type="submit"
             disabled={!input.trim() || isTyping}
-            className={`p-2 bg-${theme.primaryColor}-600 text-white rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`p-2 ${styles.buttonPrimary} text-white rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

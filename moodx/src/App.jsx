@@ -39,7 +39,7 @@ function AppWithTheme() {
 
 // Main App content
 function AppContent() {
-  const { theme, darkMode } = useTheme();
+  const { darkMode } = useTheme();
   const [moods, setMoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -73,6 +73,17 @@ function AppContent() {
 
   // Add this state for controlling the settings modal
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+  // Update the theme object to handle colors consistently across all views
+  const theme = {
+    primaryColor: darkMode ? 'emerald' : 'orange',
+    cardBg: darkMode ? 'bg-gray-800' : 'bg-white',
+    textColor: darkMode ? 'text-white' : 'text-gray-800',
+    secondaryText: darkMode ? 'text-gray-300' : 'text-gray-600',
+    borderColor: darkMode ? 'border-gray-700' : 'border-gray-200',
+    buttonBg: darkMode ? 'bg-emerald-500' : 'bg-orange-500',
+    buttonHover: darkMode ? 'hover:bg-emerald-600' : 'hover:bg-orange-600',
+  };
 
   // Fetch moods on component mount
   useEffect(() => {
@@ -424,7 +435,7 @@ function AppContent() {
               <div className="flex gap-3 mt-2">
                 <button
                   onClick={() => setShowMoodForm(true)}
-                  className={`px-5 py-2.5 bg-${darkMode ? 'emerald' : 'orange'}-500 hover:bg-${darkMode ? 'emerald' : 'orange'}-600 text-white rounded-lg flex items-center shadow-sm transition-all font-medium`}
+                  className={`px-5 py-2.5 ${theme.buttonBg} ${theme.buttonHover} text-white rounded-lg flex items-center shadow-sm transition-all font-medium`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -464,8 +475,8 @@ function AppContent() {
     </div>
 
     {/* Quick Mood Check-in */}
-    <div className={`mb-6 p-6 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} shadow-md`}>
-      <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+    <div className={`mb-6 p-6 rounded-xl ${theme.cardBg} border ${theme.borderColor} shadow-md`}>
+      <h2 className={`text-xl font-bold mb-4 ${theme.textColor}`}>
         How are you feeling right now?
       </h2>
       <div className="grid grid-cols-5 gap-3">
@@ -493,13 +504,13 @@ function AppContent() {
             }`}
           >
             <span className="text-3xl mb-2">{item.emoji}</span>
-            <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{item.mood}</span>
+            <span className={`text-sm font-medium ${theme.secondaryText}`}>{item.mood}</span>
           </button>
         ))}
       </div>
       <button
         onClick={() => setShowMoodForm(true)}
-        className={`mt-4 w-full py-2 text-${darkMode ? 'emerald' : 'orange'}-600 hover:bg-${darkMode ? 'emerald' : 'orange'}-50 dark:hover:bg-${darkMode ? 'emerald' : 'orange'}-900/10 rounded-lg text-center text-sm font-medium`}
+        className={`mt-4 w-full py-2 text-${theme.primaryColor}-600 hover:bg-${theme.primaryColor}-50 dark:hover:bg-${theme.primaryColor}-900/10 rounded-lg text-center text-sm font-medium`}
       >
         Need more options? Log detailed mood
       </button>
@@ -507,7 +518,7 @@ function AppContent() {
 
     {/* What We Offer Section */}
     <div className="mb-6">
-      <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+      <h2 className={`text-xl font-bold mb-4 ${theme.textColor}`}>
         What MoodX Offers You
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -539,7 +550,7 @@ function AppContent() {
         ].map((feature, i) => (
           <div 
             key={i} 
-            className={`p-5 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} hover:shadow-md transition-shadow`}
+            className={`p-5 rounded-xl ${theme.cardBg} border ${theme.borderColor} hover:shadow-md transition-shadow`}
           >
             <div className={`w-12 h-12 flex items-center justify-center rounded-full mb-4 bg-${feature.color}-100 dark:bg-${feature.color}-900/20`}>
               <svg xmlns="http://www.w3.org/2000/svg" 
@@ -549,8 +560,8 @@ function AppContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={feature.icon} />
               </svg>
             </div>
-            <h3 className={`font-bold text-lg mb-1 ${darkMode ? 'text-white' : 'text-gray-800'}`}>{feature.title}</h3>
-            <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{feature.description}</p>
+            <h3 className={`font-bold text-lg mb-1 ${theme.textColor}`}>{feature.title}</h3>
+            <p className={`${theme.secondaryText}`}>{feature.description}</p>
           </div>
         ))}
       </div>
@@ -561,14 +572,14 @@ function AppContent() {
       {/* Main chart/stats area */}
       <div className="lg:col-span-2 space-y-6">
         {moods.length > 0 ? (
-          <div className={`rounded-xl shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}>
-            <div className="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-              <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+          <div className={`rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border overflow-hidden`}>
+            <div className="p-5 border-b ${theme.borderColor} flex justify-between items-center">
+              <h2 className={`text-xl font-bold ${theme.textColor}`}>
                 Your Mood Journey
               </h2>
               <button 
                 onClick={() => setView('insights')}
-                className={`text-sm text-${darkMode ? 'emerald' : 'orange'}-600 hover:text-${darkMode ? 'emerald' : 'orange'}-800 dark:text-${darkMode ? 'emerald' : 'orange'}-400 dark:hover:text-${darkMode ? 'emerald' : 'orange'}-300`}
+                className={`text-sm text-${theme.primaryColor}-600 hover:text-${theme.primaryColor}-800 dark:text-${theme.primaryColor}-400 dark:hover:text-${theme.primaryColor}-300`}
               >
                 View Insights
               </button>
@@ -578,22 +589,22 @@ function AppContent() {
             </div>
           </div>
         ) : (
-          <div className={`p-6 rounded-xl shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border text-center`}>
+          <div className={`p-6 rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border text-center`}>
             <div className="py-8">
               <div className="mb-6 inline-flex p-4 rounded-full bg-gray-100 dark:bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className={`text-2xl font-medium mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+              <h3 className={`text-2xl font-medium mb-3 ${theme.textColor}`}>
                 Start Your Mood Journey
               </h3>
-              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} max-w-md mx-auto mb-6`}>
+              <p className={`${theme.secondaryText} max-w-md mx-auto mb-6`}>
                 Track your moods regularly to see patterns and get personalized insights about your emotional wellbeing.
               </p>
               <button
                 onClick={() => setShowMoodForm(true)}
-                className={`px-6 py-3 bg-${darkMode ? 'emerald' : 'orange'}-500 hover:bg-${darkMode ? 'emerald' : 'orange'}-600 text-white rounded-lg transition-colors inline-flex items-center font-medium text-lg`}
+                className={`px-6 py-3 ${theme.buttonBg} ${theme.buttonHover} text-white rounded-lg transition-colors inline-flex items-center font-medium text-lg`}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -605,8 +616,8 @@ function AppContent() {
         )}
 
         {/* Daily Challenge */}
-        <div className={`p-6 rounded-xl shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
-          <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center`}>
+        <div className={`p-6 rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border`}>
+          <h2 className={`text-xl font-bold mb-4 ${theme.textColor} flex items-center`}>
             <span className="mr-2">🎯</span> Today's Wellness Challenge
           </h2>
           <DailyChallenge 
@@ -619,9 +630,9 @@ function AppContent() {
       {/* Right sidebar for progress and achievements */}
       <div className="lg:col-span-1 space-y-6">
         {/* User Level & Progress */}
-        <div className={`p-6 rounded-xl shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
+        <div className={`p-6 rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border`}>
           <div className="flex items-center justify-between mb-3">
-            <h2 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+            <h2 className={`text-lg font-bold ${theme.textColor}`}>
               Your Progress
             </h2>
             <span className={`px-3 py-1 text-sm font-bold rounded-full ${darkMode ? 'bg-emerald-900/30 text-emerald-400' : 'bg-orange-100 text-orange-600'}`}>
@@ -631,12 +642,12 @@ function AppContent() {
           
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-1">
-              <span className={darkMode ? 'text-gray-400' : 'text-gray-600'}>XP Progress</span>
+              <span className={theme.secondaryText}>XP Progress</span>
               <span className="font-medium">{pointsSystem.points}/{pointsSystem.nextLevel} points</span>
             </div>
             <div className="h-2.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div 
-                className={`h-full bg-${darkMode ? 'emerald' : 'orange'}-500 transition-all duration-500`}
+                className={`h-full bg-${theme.primaryColor}-500 transition-all duration-500`}
                 style={{ width: `${Math.round(pointsSystem.progress * 100)}%` }}
               ></div>
             </div>
@@ -668,8 +679,8 @@ function AppContent() {
         </div>
         
         {/* Getting Started Tips */}
-        <div className={`p-6 rounded-xl shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border`}>
-          <h2 className={`text-lg font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+        <div className={`p-6 rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border`}>
+          <h2 className={`text-lg font-bold mb-3 ${theme.textColor}`}>
             Getting Started
           </h2>
           <ul className="space-y-3">
@@ -682,7 +693,7 @@ function AppContent() {
               <li key={i} className="flex items-start">
                 <div className={`mt-0.5 flex-shrink-0 h-5 w-5 flex items-center justify-center rounded-full border ${
                   step.complete 
-                    ? `bg-${darkMode ? 'emerald' : 'orange'}-500 border-${darkMode ? 'emerald' : 'orange'}-600` 
+                    ? `bg-${theme.primaryColor}-500 border-${theme.primaryColor}-600` 
                     : 'border-gray-300 dark:border-gray-600'
                 }`}>
                   {step.complete && (
@@ -691,7 +702,7 @@ function AppContent() {
                     </svg>
                   )}
                 </div>
-                <span className={`ml-2 ${step.complete ? 'line-through opacity-70' : ''} ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <span className={`ml-2 ${step.complete ? 'line-through opacity-70' : ''} ${theme.secondaryText}`}>
                   {step.text}
                 </span>
               </li>
@@ -700,19 +711,19 @@ function AppContent() {
         </div>
         
         {moods.length > 0 && (
-          <div className={`rounded-xl shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border overflow-hidden`}>
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <h2 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-800'} flex items-center`}>
+          <div className={`rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border overflow-hidden`}>
+            <div className="p-4 border-b ${theme.borderColor}">
+              <h2 className={`font-bold ${theme.textColor} flex items-center`}>
                 <span className="mr-2">📝</span> Recent Entries
               </h2>
             </div>
             <div>
               <MoodList moods={moods.slice(0, 3)} deleteMood={handleDeleteMood} compact={true} />
               {moods.length > 3 && (
-                <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                <div className="px-4 py-2 border-t ${theme.borderColor}">
                   <button 
                     onClick={() => setView('log')}
-                    className={`w-full text-center text-sm text-${darkMode ? 'emerald' : 'orange'}-600 hover:text-${darkMode ? 'emerald' : 'orange'}-700 dark:text-${darkMode ? 'emerald' : 'orange'}-400`}
+                    className={`w-full text-center text-sm text-${theme.primaryColor}-600 hover:text-${theme.primaryColor}-700 dark:text-${theme.primaryColor}-400`}
                   >
                     View all entries →
                   </button>
@@ -735,8 +746,8 @@ function AppContent() {
               </div>
               
               <div className="grid md:grid-cols-2 gap-6">
-                <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
-                  <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor}`}>
+                  <div className="p-5 border-b ${theme.borderColor}">
                     <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
                       <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-2 rounded-lg mr-2">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -757,8 +768,8 @@ function AppContent() {
                 
                 <div className="space-y-6">
                   {moods.length > 0 && (
-                    <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
-                      <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                    <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor}`}>
+                      <div className="p-5 border-b ${theme.borderColor}">
                         <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
                           <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-2 rounded-lg mr-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -774,8 +785,8 @@ function AppContent() {
                     </div>
                   )}
                   
-                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
-                    <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor}`}>
+                    <div className="p-5 border-b ${theme.borderColor}">
                       <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
                         <span className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-2 rounded-lg mr-2">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -809,8 +820,8 @@ function AppContent() {
               
               {moods.length > 0 && (
                 <div className="mt-6">
-                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
-                    <div className="p-5 border-b border-gray-200 dark:border-gray-800">
+                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor}`}>
+                    <div className="p-5 border-b ${theme.borderColor}">
                       <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
                         <span className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white p-2 rounded-lg mr-2">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -840,7 +851,7 @@ function AppContent() {
           {view === 'insights' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 p-6`}>
+                <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor} p-6`}>
                   <h2 className={`text-xl font-bold mb-4 ${theme.textColor}`}>
                     Mood Trends
                   </h2>

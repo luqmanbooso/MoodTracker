@@ -4,7 +4,23 @@ import HabitBuilder from './HabitBuilder';
 import GoalTracker from './GoalTracker';
 
 const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit, onAddGoal, onUpdateGoal }) => {
-  const { theme } = useTheme();
+  const { theme, darkMode } = useTheme();
+
+  // Create theme-aware styles
+  const styles = {
+    primaryColor: darkMode ? 'emerald' : 'orange',
+    primaryText: darkMode ? 'text-emerald-500' : 'text-orange-500',
+    primaryBg: darkMode ? 'bg-emerald-500' : 'bg-orange-500',
+    primaryHover: darkMode ? 'hover:bg-emerald-600' : 'hover:bg-orange-600',
+    primaryLight: darkMode ? 'bg-emerald-500/20' : 'bg-orange-500/10',
+    progressTrack: darkMode ? 'bg-gray-700' : 'bg-gray-200',
+    progressFill: darkMode ? 'bg-emerald-500' : 'bg-orange-500',
+    cardBg: darkMode ? 'bg-gray-800' : 'bg-white',
+    cardBorder: darkMode ? 'border-gray-700' : 'border-gray-200',
+    headerText: darkMode ? 'text-white' : 'text-gray-800',
+    bodyText: darkMode ? 'text-gray-300' : 'text-gray-600',
+  };
+
   const [activeTab, setActiveTab] = useState('habits');
   
   const stats = {
@@ -23,7 +39,7 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
   return (
     <div className="animate-fade-in">
       {/* Header Banner */}
-      <div className={`mb-6 p-6 rounded-xl bg-gradient-to-r from-${theme.primaryColor}-600 via-${theme.primaryColor}-500 to-${theme.primaryColor}-700 text-white shadow-xl relative overflow-hidden`}>
+      <div className={`mb-6 p-6 rounded-xl bg-gradient-to-r from-${styles.primaryColor}-600 via-${styles.primaryColor}-500 to-${styles.primaryColor}-700 text-white shadow-xl relative overflow-hidden`}>
         <div className="absolute top-0 right-0 opacity-10">
           <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 20v-6M6 20V10M18 20V4"></path>
@@ -59,7 +75,7 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
           onClick={() => setActiveTab('habits')}
           className={`py-3 px-6 text-center border-b-2 font-medium text-sm transition-colors ${
             activeTab === 'habits'
-              ? `border-${theme.primaryColor}-500 text-${theme.primaryColor}-600 dark:text-${theme.primaryColor}-400`
+              ? `border-${styles.primaryColor}-500 text-${styles.primaryColor}-600 dark:text-${styles.primaryColor}-400`
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
           }`}
         >
@@ -69,7 +85,7 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
           onClick={() => setActiveTab('goals')}
           className={`py-3 px-6 text-center border-b-2 font-medium text-sm transition-colors ${
             activeTab === 'goals'
-              ? `border-${theme.primaryColor}-500 text-${theme.primaryColor}-600 dark:text-${theme.primaryColor}-400`
+              ? `border-${styles.primaryColor}-500 text-${styles.primaryColor}-600 dark:text-${styles.primaryColor}-400`
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
           }`}
         >
@@ -79,7 +95,7 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
           onClick={() => setActiveTab('achievements')}
           className={`py-3 px-6 text-center border-b-2 font-medium text-sm transition-colors ${
             activeTab === 'achievements'
-              ? `border-${theme.primaryColor}-500 text-${theme.primaryColor}-600 dark:text-${theme.primaryColor}-400`
+              ? `border-${styles.primaryColor}-500 text-${styles.primaryColor}-600 dark:text-${styles.primaryColor}-400`
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
           }`}
         >
@@ -89,7 +105,7 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
           onClick={() => setActiveTab('challenges')}
           className={`py-3 px-6 text-center border-b-2 font-medium text-sm transition-colors ${
             activeTab === 'challenges'
-              ? `border-${theme.primaryColor}-500 text-${theme.primaryColor}-600 dark:text-${theme.primaryColor}-400`
+              ? `border-${styles.primaryColor}-500 text-${styles.primaryColor}-600 dark:text-${styles.primaryColor}-400`
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
           }`}
         >
@@ -119,33 +135,33 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
       )}
       
       {activeTab === 'achievements' && (
-        <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 p-6`}>
-          <h2 className={`text-xl font-bold mb-6 ${theme.textColor}`}>Your Achievements</h2>
+        <div className={`${styles.cardBg} rounded-xl shadow-lg overflow-hidden border ${styles.cardBorder} p-6`}>
+          <h2 className={`text-xl font-bold mb-6 ${styles.headerText}`}>Your Achievements</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Achievement Cards */}
-            <div className={`p-4 border border-gray-200 dark:border-gray-800 rounded-lg ${theme.cardBg} relative overflow-hidden`}>
-              <div className={`absolute top-0 right-0 bg-${theme.primaryColor}-100 dark:bg-${theme.primaryColor}-900/30 text-${theme.primaryColor}-800 dark:text-${theme.primaryColor}-200 text-xs px-2 py-1 rounded-bl-lg`}>
+            <div className={`p-4 border ${styles.cardBorder} rounded-lg ${styles.cardBg} relative overflow-hidden`}>
+              <div className={`absolute top-0 right-0 bg-${styles.primaryColor}-100 dark:bg-${styles.primaryColor}-900/30 text-${styles.primaryColor}-800 dark:text-${styles.primaryColor}-200 text-xs px-2 py-1 rounded-bl-lg`}>
                 Unlocked
               </div>
               <div className="flex items-center mb-4">
-                <div className={`w-12 h-12 rounded-full bg-${theme.primaryColor}-100 dark:bg-${theme.primaryColor}-900/20 flex items-center justify-center mr-4`}>
+                <div className={`w-12 h-12 rounded-full bg-${styles.primaryColor}-100 dark:bg-${styles.primaryColor}-900/20 flex items-center justify-center mr-4`}>
                   <span className="text-2xl">🔥</span>
                 </div>
                 <div>
-                  <h3 className={`font-bold text-lg ${theme.textColor}`}>Consistency Master</h3>
+                  <h3 className={`font-bold text-lg ${styles.headerText}`}>Consistency Master</h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm">Complete a 7-day streak</p>
                 </div>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
-                <div className={`bg-${theme.primaryColor}-500 rounded-full h-2.5`} style={{ width: '100%' }}></div>
+              <div className={`w-full ${styles.progressTrack} rounded-full h-2.5 mb-1`}>
+                <div className={`${styles.progressFill} rounded-full h-2.5`} style={{ width: '100%' }}></div>
               </div>
               <div className="text-right text-xs text-gray-500 dark:text-gray-400">
                 Completed
               </div>
             </div>
             
-            <div className={`p-4 border border-gray-200 dark:border-gray-800 rounded-lg ${theme.cardBg} relative overflow-hidden grayscale opacity-70`}>
+            <div className={`p-4 border ${styles.cardBorder} rounded-lg ${styles.cardBg} relative overflow-hidden grayscale opacity-70`}>
               <div className="absolute top-0 right-0 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs px-2 py-1 rounded-bl-lg">
                 Locked
               </div>
@@ -154,11 +170,11 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
                   <span className="text-2xl">🎯</span>
                 </div>
                 <div>
-                  <h3 className={`font-bold text-lg ${theme.textColor}`}>Goal Getter</h3>
+                  <h3 className={`font-bold text-lg ${styles.headerText}`}>Goal Getter</h3>
                   <p className="text-gray-600 dark:text-gray-400 text-sm">Complete 5 goals</p>
                 </div>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-1">
+              <div className={`w-full ${styles.progressTrack} rounded-full h-2.5 mb-1`}>
                 <div className="bg-gray-400 dark:bg-gray-600 rounded-full h-2.5" style={{ width: '40%' }}></div>
               </div>
               <div className="text-right text-xs text-gray-500 dark:text-gray-400">
@@ -172,11 +188,11 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
       )}
       
       {activeTab === 'challenges' && (
-        <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 p-6`}>
-          <h2 className={`text-xl font-bold mb-6 ${theme.textColor}`}>Challenge History</h2>
+        <div className={`${styles.cardBg} rounded-xl shadow-lg overflow-hidden border ${styles.cardBorder} p-6`}>
+          <h2 className={`text-xl font-bold mb-6 ${styles.headerText}`}>Challenge History</h2>
           
           <div className="space-y-4">
-            <div className={`p-4 border border-gray-200 dark:border-gray-700 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4 items-center bg-green-50 dark:bg-green-900/20`}>
+            <div className={`p-4 border ${styles.cardBorder} rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4 items-center bg-green-50 dark:bg-green-900/20`}>
               <div className="flex items-center">
                 <div className="bg-white dark:bg-gray-800 rounded-full p-2 mr-3">
                   <span className="text-xl">🙏</span>
@@ -186,7 +202,7 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
                   <p className="text-xs text-gray-600 dark:text-gray-400">Mindfulness</p>
                 </div>
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 col-span-1 md:col-span-2">
+              <div className={`text-sm ${styles.bodyText} col-span-1 md:col-span-2`}>
                 Write down three things you're grateful for today.
               </div>
               <div className="flex items-center justify-end">
@@ -199,7 +215,7 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
               </div>
             </div>
             
-            <div className={`p-4 border border-gray-200 dark:border-gray-700 rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4 items-center bg-white dark:bg-gray-800`}>
+            <div className={`p-4 border ${styles.cardBorder} rounded-lg grid grid-cols-1 md:grid-cols-4 gap-4 items-center bg-white dark:bg-gray-800`}>
               <div className="flex items-center">
                 <div className="bg-gray-100 dark:bg-gray-700 rounded-full p-2 mr-3">
                   <span className="text-xl">💬</span>
@@ -209,7 +225,7 @@ const ProgressTracker = ({ habits = [], goals = [], onAddHabit, onCompleteHabit,
                   <p className="text-xs text-gray-600 dark:text-gray-400">Social</p>
                 </div>
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-400 col-span-1 md:col-span-2">
+              <div className={`text-sm ${styles.bodyText} col-span-1 md:col-span-2`}>
                 Give a genuine compliment to someone in your life.
               </div>
               <div className="flex items-center justify-end">

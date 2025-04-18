@@ -2,8 +2,19 @@ import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 
 const ResourcesHub = ({ moods = [], customMoodCategories = [] }) => {
-  const { theme } = useTheme();
+  const { theme, darkMode } = useTheme();
   const [activeCategory, setActiveCategory] = useState('all');
+
+  // Create theme-aware styles
+  const styles = {
+    primaryText: darkMode ? 'text-emerald-500' : 'text-orange-500',
+    secondaryText: darkMode ? 'text-gray-300' : 'text-gray-700',
+    headingText: darkMode ? 'text-white' : 'text-gray-800',
+    cardBg: darkMode ? 'bg-gray-800' : 'bg-white',
+    cardBorder: darkMode ? 'border-gray-700' : 'border-gray-200',
+    linkColor: darkMode ? 'text-emerald-400 hover:text-emerald-300' : 'text-orange-500 hover:text-orange-600',
+    buttonPrimary: darkMode ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600',
+  };
 
   const categories = [
     { id: 'all', name: 'All Resources', icon: 'grid' },
@@ -147,7 +158,7 @@ const ResourcesHub = ({ moods = [], customMoodCategories = [] }) => {
       
       {/* Featured Resource */}
       {featuredResource && activeCategory === 'all' && (
-        <div className={`mb-6 ${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800`}>
+        <div className={`mb-6 ${styles.cardBg} rounded-xl shadow-lg overflow-hidden border ${styles.cardBorder}`}>
           <div className="md:flex">
             <div className="md:w-1/3">
               <img 
@@ -164,7 +175,7 @@ const ResourcesHub = ({ moods = [], customMoodCategories = [] }) => {
                 <span className="mx-2 text-gray-500">•</span>
                 <span className="text-gray-600 dark:text-gray-400 capitalize">{featuredResource.category}</span>
               </div>
-              <h2 className={`text-xl font-bold ${theme.textColor} mb-2`}>{featuredResource.title}</h2>
+              <h2 className={`text-xl font-bold ${styles.headingText} mb-2`}>{featuredResource.title}</h2>
               <p className="text-gray-600 dark:text-gray-400 mb-4">{featuredResource.description}</p>
               <div className="flex flex-wrap gap-2 mb-4">
                 {featuredResource.tags.map(tag => (
@@ -175,7 +186,7 @@ const ResourcesHub = ({ moods = [], customMoodCategories = [] }) => {
               </div>
               <a 
                 href={featuredResource.link}
-                className={`inline-block px-4 py-2 bg-${theme.primaryColor}-600 hover:bg-${theme.primaryColor}-700 text-white rounded-lg transition-all font-medium`}
+                className={`inline-block px-4 py-2 ${styles.buttonPrimary} text-white rounded-lg transition-all font-medium`}
               >
                 Read More
               </a>
@@ -189,7 +200,7 @@ const ResourcesHub = ({ moods = [], customMoodCategories = [] }) => {
         {filteredResources.map(resource => (
           <div 
             key={resource.id}
-            className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border border-gray-200 dark:border-gray-800 hover:shadow-xl transition-all transform hover:-translate-y-1 card-hover-effect`}
+            className={`${styles.cardBg} rounded-xl shadow-lg overflow-hidden border ${styles.cardBorder} hover:shadow-xl transition-all transform hover:-translate-y-1 card-hover-effect`}
           >
             <img 
               src={resource.imageUrl} 
@@ -213,7 +224,7 @@ const ResourcesHub = ({ moods = [], customMoodCategories = [] }) => {
                   </>
                 )}
               </div>
-              <h3 className={`text-lg font-bold ${theme.textColor} mb-2`}>{resource.title}</h3>
+              <h3 className={`text-lg font-bold ${styles.headingText} mb-2`}>{resource.title}</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4 text-sm">{resource.description}</p>
               <div className="flex flex-wrap gap-1 mb-4">
                 {resource.tags.map(tag => (
@@ -224,7 +235,7 @@ const ResourcesHub = ({ moods = [], customMoodCategories = [] }) => {
               </div>
               <a 
                 href={resource.link}
-                className={`inline-block px-3 py-1 bg-${theme.primaryColor}-100 hover:bg-${theme.primaryColor}-200 dark:bg-${theme.primaryColor}-900/20 dark:hover:bg-${theme.primaryColor}-900/30 text-${theme.primaryColor}-700 dark:text-${theme.primaryColor}-300 rounded-lg transition-all text-sm font-medium`}
+                className={`inline-block px-3 py-1 ${styles.linkColor} rounded-lg transition-all text-sm font-medium`}
               >
                 View Resource
               </a>
