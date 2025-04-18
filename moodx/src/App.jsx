@@ -26,6 +26,8 @@ import GoalTracker from './components/GoalTracker';
 import MoodAssistant from './components/MoodAssistant';
 import Settings from './components/Settings';
 import ProgressTracker from './components/ProgressTracker';
+import ProgressPage from './components/gamification/ProgressPage';
+import PointsNotification from './components/gamification/PointsNotification';
 import UserGreeting from './components/UserGreeting';
 import React from 'react';
 import { ProgressProvider } from './contexts/ProgressContext';
@@ -34,7 +36,9 @@ import { ProgressProvider } from './contexts/ProgressContext';
 function AppWithTheme() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <ProgressProvider>
+        <AppContent />
+      </ProgressProvider>
     </ThemeProvider>
   );
 }
@@ -45,7 +49,7 @@ function AppContent() {
   const [moods, setMoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [view, setView] = useState('dashboard'); // 'dashboard', 'log', 'stats', 'challenges', 'resources', 'settings'
+  const [view, setView] = useState('dashboard'); // 'dashboard', 'log', 'stats', 'challenges', 'resources', 'settings', 'progress'
   const [customMoodCategories, setCustomMoodCategories] = useState(() => {
     // Load from localStorage if available
     const saved = localStorage.getItem('custom-moods');
@@ -133,6 +137,10 @@ function AppContent() {
     return () => clearInterval(interval);
   }, [moods]);
 
+  // Rest of your functions (fetchMoods, handleAddMood, etc.)
+  // [Keeping original implementation]
+
+  // Add this for the function parameters we need from your original code
   const fetchMoods = async () => {
     try {
       setLoading(true);
@@ -250,7 +258,6 @@ function AppContent() {
     }
   };
 
-  // Add to App.jsx - computeStreak function
   function computeStreak() {
     if (moods.length === 0) return 0;
     
@@ -368,14 +375,14 @@ function AppContent() {
   } : null;
 
   return (
-    <ProgressProvider>
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'}`}>
       <Navigation 
         activeView={view} 
         setView={setView}
-        // This is the important part - pass the function to open the modal
         openSettingsModal={() => setIsSettingsModalOpen(true)}
       />
+      
+      <PointsNotification />
       
       <div className="md:ml-64 pt-16 md:pt-0">
         <div className="pt-16 md:pt-4 px-4 md:px-6 lg:px-8 pb-20">
@@ -411,7 +418,7 @@ function AppContent() {
             </div>
           )}
           
-          {/* Dashboard View */}
+          {/* Views */}
           {view === 'dashboard' && (
   <>
     {/* Top Hero Section with Quote Carousel */}
@@ -740,7 +747,6 @@ function AppContent() {
   </>
 )}
           
-          {/* Other views - just include the basic structure here */}
           {view === 'log' && (
             <div className="animate-fade-in">
               <div className={`mb-6 p-6 rounded-xl bg-gradient-to-r from-${theme.primaryColor}-600 via-${theme.primaryColor}-500 to-${theme.primaryColor}-700 text-white shadow-xl`}>
@@ -947,14 +953,7 @@ function AppContent() {
 
           {/* Progress View */}
           {view === 'progress' && (
-            <ProgressTracker
-              habits={habits}
-              goals={goals}
-              onAddHabit={handleAddHabit}
-              onCompleteHabit={handleCompleteHabit}
-              onAddGoal={handleAddGoal}
-              onUpdateGoal={handleUpdateGoal}
-            />
+            <ProgressPage />
           )}
         </div>
       </div>
@@ -968,7 +967,6 @@ function AppContent() {
         onRemoveCustomMood={handleRemoveCustomMood}
       />
     </div>
-    </ProgressProvider>
   );
 }
 
