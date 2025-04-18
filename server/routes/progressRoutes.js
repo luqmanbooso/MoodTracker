@@ -1,5 +1,5 @@
 import express from 'express';
-import { getHabits, createHabit, completeHabit, updateHabit, deleteHabit } from '../controllers/habitController.js';
+import { getUserProgress, getAchievements, getUserStats } from '../controllers/progressController.js';
 // Import the mock user middleware (optional)
 import { authenticateUser } from '../middleware/auth.js';
 
@@ -9,10 +9,8 @@ const router = express.Router();
 router.use(authenticateUser);
 
 // No authentication required routes
-router.get('/', getHabits);
-router.post('/', createHabit);
-router.post('/:habitId/complete', completeHabit);
-router.put('/:habitId', updateHabit);
-router.delete('/:habitId', deleteHabit);
+router.get('/', getUserProgress);
+router.get('/achievements', getAchievements);
+router.get('/stats', getUserStats);
 
 export default router;

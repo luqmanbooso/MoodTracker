@@ -1,12 +1,24 @@
 import express from 'express';
-import { getResources, getEmergencyContacts } from '../controllers/resourceController.js';
+import { 
+  getResources, 
+  getResourceById, 
+  completeResource,
+  getCategories,
+  getTags
+} from '../controllers/resourceController.js';
+// Import the mock user middleware (optional)
+import { authenticateUser } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Get resources (with optional category filter)
-router.get('/', getResources);
+// Add mock user to all requests (optional)
+router.use(authenticateUser);
 
-// Get emergency contacts by country
-router.get('/emergency/:country', getEmergencyContacts);
+// All routes accessible without authentication
+router.get('/', getResources);
+router.get('/categories', getCategories);
+router.get('/tags', getTags);
+router.get('/:id', getResourceById);
+router.post('/:id/complete', completeResource);
 
 export default router;

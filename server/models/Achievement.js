@@ -1,41 +1,39 @@
 import mongoose from 'mongoose';
 
 const achievementSchema = new mongoose.Schema({
-  userId: {
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  type: {
+    type: String,
+    enum: ['mood_entries', 'streaks', 'habit_completion', 'goal_completion', 'resource_usage', 'category_variety'],
+    required: true
+  },
+  title: {
     type: String,
     required: true
   },
-  achievementId: {
+  description: {
     type: String,
     required: true
   },
-  name: {
-    type: String,
-    required: true
-  },
-  description: String,
-  icon: String,
-  category: {
-    type: String,
-    enum: ['Mood', 'Habit', 'Challenge', 'Streak', 'Engagement', 'Special']
-  },
-  pointsAwarded: {
+  level: {
     type: Number,
-    default: 20
+    default: 1
   },
-  unlockedAt: {
+  points: {
+    type: Number,
+    default: 10
+  },
+  earnedDate: {
     type: Date,
     default: Date.now
   },
-  progress: {
-    current: Number,
-    target: Number
-  },
-  isSecret: {
-    type: Boolean,
-    default: false
+  iconName: {
+    type: String
   }
-});
+}, { timestamps: true });
 
-const Achievement = mongoose.model('Achievement', achievementSchema);
-export default Achievement;
+export default mongoose.model('Achievement', achievementSchema);

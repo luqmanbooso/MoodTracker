@@ -1,18 +1,17 @@
 import express from 'express';
 import { getMoods, createMood, updateMood, deleteMood } from '../controllers/moodController.js';
+// Import the mock user middleware (optional)
+import { authenticateUser } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Get all moods
+// Add mock user to all requests (optional)
+router.use(authenticateUser);
+
+// No authentication required routes
 router.get('/', getMoods);
-
-// Create a new mood
 router.post('/', createMood);
-
-// Update a mood
 router.put('/:id', updateMood);
-
-// Delete a mood
 router.delete('/:id', deleteMood);
 
 export default router;
