@@ -4,12 +4,12 @@ const achievementSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    default: '000000000000000000000000' // Default user ID for development
   },
   type: {
     type: String,
-    enum: ['mood_entries', 'streaks', 'habit_completion', 'goal_completion', 'resource_usage', 'category_variety'],
-    required: true
+    required: true,
+    enum: ['mood_entries', 'streaks', 'challenge_completion', 'resource_usage']
   },
   title: {
     type: String,
@@ -27,13 +27,16 @@ const achievementSchema = new mongoose.Schema({
     type: Number,
     default: 10
   },
+  iconName: {
+    type: String,
+    default: 'emoji_events'
+  },
   earnedDate: {
     type: Date,
     default: Date.now
-  },
-  iconName: {
-    type: String
   }
 }, { timestamps: true });
 
-export default mongoose.model('Achievement', achievementSchema);
+const Achievement = mongoose.model('Achievement', achievementSchema);
+
+export default Achievement;

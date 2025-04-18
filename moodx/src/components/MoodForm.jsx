@@ -1,10 +1,18 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomMoodInput from './CustomMoodInput';
 import VoiceMoodInput from './VoiceMoodInput';
 import { useTheme } from '../context/ThemeContext'; // Assuming you have a theme context
+import { createMood } from '../services/api';
+import { useProgress } from '../contexts/ProgressContext';
+import '../styles/MoodForm.css';
 
-const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = false }) => {
+const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = false, onSubmit, initialMood = '', initialIntensity = 3, initialNotes = '' }) => {
   const { darkMode } = useTheme();
+  
+  // Fix the hook usage - don't conditionally call hooks
+  const progress = useProgress();
+  // Safely access the awardPoints function
+  const awardPoints = progress ? progress.awardPoints : null;
 
   // Create theme-aware styles
   const styles = {
@@ -19,10 +27,10 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
   };
 
   const [moodData, setMoodData] = useState({
-    mood: 'Good',
+    mood: initialMood || 'Good',
     customMood: '',
-    intensity: 5,
-    note: '',
+    intensity: initialIntensity || 5,
+    note: initialNotes || '',
     activities: [],
     tags: []
   });
@@ -31,6 +39,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
   const [selectedMoodColor, setSelectedMoodColor] = useState('bg-blue-500');
   const [showSuccess, setShowSuccess] = useState(false);
   const [lastAction, setLastAction] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const moodOptions = ['Great', 'Good', 'Okay', 'Bad', 'Terrible'];
   const activityOptions = ['Exercise', 'Work', 'Family', 'Friends', 'Hobby', 'Rest', 'Other'];
@@ -111,21 +120,51 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    addMood(moodData);
-    // Show success animation
-    setShowSuccess(true);
-    // Reset form
-    setMoodData({
-      mood: 'Good',
-      customMood: '',
-      intensity: 5,
-      note: '',
-      activities: [],
-      tags: []
-    });
-    setTagInput('');
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+    
+    try {
+      // Call the API function to create mood
+      const response = await createMood(moodData);
+      
+      // If addMood function is provided, call it with the new mood data
+      if (addMood) {
+        addMood({
+          ...moodData,
+          date: new Date(),
+          id: response?.id || Date.now().toString()
+        });
+      }
+      
+      // If onSubmit callback is provided, call it
+      if (onSubmit) {
+        onSubmit(moodData);
+      }
+      
+      // Award points if the function is available
+      if (awardPoints) {
+        try {
+          await awardPoints(10, 'mood_entry', 'Logged your daily mood');
+        } catch (pointsError) {
+          console.error('Error awarding points:', pointsError);
+        }
+      }
+      
+      // Reset form
+      setMoodData({
+        mood: 'Good',
+        customMood: '',
+        intensity: 5,
+        note: '',
+        activities: [],
+        tags: []
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error submitting mood:', error);
+      return false;
+    }
   };
 
   const handleQuickMood = (mood) => {

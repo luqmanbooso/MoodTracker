@@ -27,6 +27,8 @@ import MoodAssistant from './components/MoodAssistant';
 import Settings from './components/Settings';
 import ProgressTracker from './components/ProgressTracker';
 import UserGreeting from './components/UserGreeting';
+import React from 'react';
+import { ProgressProvider } from './contexts/ProgressContext';
 
 // Main App component wrapper with ThemeProvider
 function AppWithTheme() {
@@ -366,6 +368,7 @@ function AppContent() {
   } : null;
 
   return (
+    <ProgressProvider>
     <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'}`}>
       <Navigation 
         activeView={view} 
@@ -965,6 +968,7 @@ function AppContent() {
         onRemoveCustomMood={handleRemoveCustomMood}
       />
     </div>
+    </ProgressProvider>
   );
 }
 
