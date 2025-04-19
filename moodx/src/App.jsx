@@ -31,13 +31,18 @@ import PointsNotification from './components/gamification/PointsNotification';
 import UserGreeting from './components/UserGreeting';
 import React from 'react';
 import { ProgressProvider } from './contexts/ProgressContext';
+// Add the new imports
+import { ChallengeProvider } from './contexts/ChallengeContext';
+import ChallengesPage from './components/gamification/ChallengesPage';
 
 // Main App component wrapper with ThemeProvider
 function AppWithTheme() {
   return (
     <ThemeProvider>
       <ProgressProvider>
-        <AppContent />
+        <ChallengeProvider>
+          <AppContent />
+        </ChallengeProvider>
       </ProgressProvider>
     </ThemeProvider>
   );
@@ -854,6 +859,11 @@ function AppContent() {
                 </div>
               )}
             </div>
+          )}
+          
+          {/* Challenges View - Add this new view */}
+          {view === 'challenges' && (
+            <ChallengesPage />
           )}
           
           {/* Insights View */}

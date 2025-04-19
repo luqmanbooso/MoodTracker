@@ -1,24 +1,58 @@
 import mongoose from 'mongoose';
 
-const ChallengeSchema = new mongoose.Schema({
-  text: {
+const challengeSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  description: {
     type: String,
     required: true
   },
-  category: {
+  type: {
     type: String,
-    enum: ['physical', 'mindfulness', 'health', 'social', 'environment'],
-    required: true
+    required: true,
+    enum: ['daily', 'weekly', 'milestone', 'habit', 'special']
   },
-  difficulty: {
+  requirements: {
+    count: { type: Number, required: true }, // Number of actions required
+    action: { type: String, required: true }, // Type of action (log_mood, use_feature, etc)
+    metadata: { type: Map, of: mongoose.Schema.Types.Mixed } // Additional requirements
+  },
+  points: {
+    type: Number,
+    default: 10
+  },
+  duration: { // Time limit to complete (in days)
+    type: Number,
+    default: null
+  },
+  difficultyLevel: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: 1
+  },
+  icon: {
     type: String,
-    enum: ['easy', 'medium', 'hard'],
-    default: 'medium'
+    default: 'star'
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  relatedAchievement: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Achievement',
+    default: null
+  },
+  active: {
+    type: Boolean,
+    default: true
+  },
+  featured: {
+    type: Boolean,
+    default: false
   }
-});
+}, { timestamps: true });
 
-export default mongoose.model('Challenge', ChallengeSchema);
+const Challenge = mongoose.model('Challenge', challengeSchema);
+
+export default Challenge;

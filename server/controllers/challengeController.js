@@ -1,5 +1,7 @@
 import Challenge from '../models/Challenge.js';
 import UserChallenge from '../models/UserChallenge.js';
+import Achievement from '../models/Achievement.js';
+import Progress from '../models/Progress.js';
 
 // Sample challenges to populate DB if needed
 const sampleChallenges = [
@@ -223,60 +225,393 @@ export const seedChallenges = async (req, res) => {
   }
 };
 
-// Get all challenges
+// Get all available challenges
 export const getChallenges = async (req, res) => {
   try {
-    let challenges = await Challenge.find();
+    const userId = req.user.id;
     
-    // If no challenges in DB, seed with sample data
-    if (challenges.length === 0) {
-      await Challenge.insertMany(sampleChallenges);
-      challenges = await Challenge.find();
-    }
+    // Get all active challenges
+    const challenges = await Challenge.find({ active: true });
     
-    res.json(challenges);
+    // Get user's progress on these challenges
+    const userChallenges = await UserChallenge.find({ 
+      user: userId,
+      challenge: { $in: challenges.map(c => c._id) }
+    });
+    
+    // Combine data to return challenges with progress
+    const challengesWithProgress = challenges.map(challenge => {
+      const userProgress = userChallenges.find(
+        uc => uc.challenge.toString() === challenge._id.toString()
+      );
+      
+      return {
+        ...challenge.toObject(),
+        progress: userProgress ? userProgress.progress : 0,
+        completed: userProgress ? userProgress.completed : false,
+        startedAt: userProgress ? userProgress.startedAt : null,
+        expiresAt: userProgress ? userProgress.expiresAt : null
+      };
+    });
+    
+    res.status(200).json(challengesWithProgress);
   } catch (err) {
-    console.error('Error in getChallenges controller:', err.message);
-    res.status(500).json({ message: 'Server Error' });
+    console.error('Error getting challenges:', err);
+    res.status(500).json({ message: 'Failed to get challenges', error: err.message });
   }
 };
 
-// Get random challenge
-export const getRandomChallenge = async (req, res) => {
+// Get user's challenges
+export const getUserChallenges = async (req, res) => {
   try {
-    // Get total count of challenges
-    const count = await Challenge.countDocuments();
+    const userId = req.user.id;
     
-    // If no challenges, seed with sample data
-    if (count === 0) {
-      await Challenge.insertMany(sampleChallenges);
-    }
+    // Get user's challenges with populated challenge details
+    const userChallenges = await UserChallenge.find({ user: userId })
+      .populate('challenge')
+      .sort({ startedAt: -1 });
     
-    // Get random challenge
-    const random = Math.floor(Math.random() * count);
-    const challenge = await Challenge.findOne().skip(random);
-    
-    res.json(challenge);
+    res.status(200).json(userChallenges);
   } catch (err) {
-    console.error('Error in getRandomChallenge controller:', err.message);
-    res.status(500).json({ message: 'Server Error' });
+    console.error('Error getting user challenges:', err);
+    res.status(500).json({ message: 'Failed to get user challenges', error: err.message });
   }
 };
 
-// Mark challenge as complete
-export const markChallengeComplete = async (req, res) => {
+// Accept a challenge
+export const acceptChallenge = async (req, res) => {
   try {
-    const challenge = await Challenge.findById(req.params.id);
+    const userId = req.user.id;
+    const { challengeId } = req.params;
     
+    // Check if challenge exists
+    const challenge = await Challenge.findById(challengeId);
     if (!challenge) {
       return res.status(404).json({ message: 'Challenge not found' });
     }
     
-    // In a real app, you'd track which user completed the challenge
-    // For now, we'll just return success
-    res.json({ success: true, message: 'Challenge marked as complete' });
+    // Check if user already has this challenge
+    const existingChallenge = await UserChallenge.findOne({ 
+      user: userId, 
+      challenge: challengeId 
+    });
+    
+    if (existingChallenge) {
+      return res.status(400).json({ 
+        message: 'You have already accepted this challenge',
+        userChallenge: existingChallenge
+      });
+    }
+    
+    // Calculate expiration date if there's a duration
+    let expiresAt = null;
+    if (challenge.duration) {
+      expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + challenge.duration);
+    }
+    
+    // Create user challenge
+    const userChallenge = new UserChallenge({
+      user: userId,
+      challenge: challengeId,
+      progress: 0,
+      completed: false,
+      startedAt: new Date(),
+      expiresAt
+    });
+    
+    await userChallenge.save();
+    
+    res.status(201).json({
+      message: 'Challenge accepted successfully',
+      userChallenge: await UserChallenge.findById(userChallenge._id).populate('challenge')
+    });
   } catch (err) {
-    console.error('Error in markChallengeComplete controller:', err.message);
-    res.status(500).json({ message: 'Server Error' });
+    console.error('Error accepting challenge:', err);
+    res.status(500).json({ message: 'Failed to accept challenge', error: err.message });
+  }
+};
+
+// Update challenge progress
+export const updateChallengeProgress = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { challengeId } = req.params;
+    const { progress, action } = req.body;
+    
+    // Find user challenge
+    const userChallenge = await UserChallenge.findOne({
+      user: userId,
+      challenge: challengeId
+    }).populate('challenge');
+    
+    if (!userChallenge) {
+      return res.status(404).json({ message: 'Challenge not found or not accepted' });
+    }
+    
+    if (userChallenge.completed) {
+      return res.status(400).json({ message: 'Challenge already completed' });
+    }
+    
+    // Check if challenge has expired
+    if (userChallenge.expiresAt && new Date() > userChallenge.expiresAt) {
+      return res.status(400).json({ message: 'Challenge has expired' });
+    }
+    
+    // Update progress
+    if (progress !== undefined) {
+      // Manual progress update
+      userChallenge.progress = Math.min(
+        progress, 
+        userChallenge.challenge.requirements.count
+      );
+    } else if (action) {
+      // Increment progress based on action
+      if (userChallenge.challenge.requirements.action === action) {
+        userChallenge.progress += 1;
+      }
+    } else {
+      userChallenge.progress += 1; // Default increment by 1
+    }
+    
+    // Check if challenge is completed
+    const isCompleted = userChallenge.progress >= userChallenge.challenge.requirements.count;
+    
+    if (isCompleted && !userChallenge.completed) {
+      userChallenge.completed = true;
+      userChallenge.completedAt = new Date();
+      
+      // Award points for completion
+      await Progress.findOneAndUpdate(
+        { user: userId },
+        { 
+          $inc: { points: userChallenge.challenge.points },
+          $push: { 
+            history: {
+              points: userChallenge.challenge.points,
+              reason: 'challenge_complete',
+              description: `Completed challenge: ${userChallenge.challenge.title}`,
+              date: new Date()
+            }
+          }
+        },
+        { new: true, upsert: true }
+      );
+      
+      // Check if there's a related achievement to award
+      if (userChallenge.challenge.relatedAchievement) {
+        // Award the achievement
+        const achievement = await Achievement.findById(
+          userChallenge.challenge.relatedAchievement
+        );
+        
+        if (achievement) {
+          // Create a user-specific copy of the achievement
+          const userAchievement = new Achievement({
+            user: userId,
+            type: achievement.type,
+            title: achievement.title,
+            description: achievement.description,
+            level: achievement.level,
+            points: achievement.points,
+            iconName: achievement.iconName,
+            earnedDate: new Date()
+          });
+          
+          await userAchievement.save();
+        }
+      }
+    }
+    
+    await userChallenge.save();
+    
+    res.status(200).json({
+      message: isCompleted ? 'Challenge completed!' : 'Progress updated',
+      userChallenge: await UserChallenge.findById(userChallenge._id).populate('challenge'),
+      completed: isCompleted,
+      pointsAwarded: isCompleted ? userChallenge.challenge.points : 0
+    });
+    
+  } catch (err) {
+    console.error('Error updating challenge progress:', err);
+    res.status(500).json({ message: 'Failed to update progress', error: err.message });
+  }
+};
+
+// Admin: Create a new challenge
+export const createChallenge = async (req, res) => {
+  try {
+    const { 
+      title, description, type, requirements, 
+      points, duration, difficultyLevel, 
+      icon, relatedAchievement, active, featured 
+    } = req.body;
+    
+    const challenge = new Challenge({
+      title,
+      description,
+      type,
+      requirements,
+      points,
+      duration,
+      difficultyLevel,
+      icon,
+      relatedAchievement,
+      active: active !== undefined ? active : true,
+      featured: featured !== undefined ? featured : false
+    });
+    
+    await challenge.save();
+    
+    res.status(201).json({
+      message: 'Challenge created successfully',
+      challenge
+    });
+  } catch (err) {
+    console.error('Error creating challenge:', err);
+    res.status(500).json({ message: 'Failed to create challenge', error: err.message });
+  }
+};
+
+// Get a random challenge for daily challenges feature
+export const getRandomChallenge = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    // Find challenges that the user hasn't completed yet
+    const userCompletedChallenges = await UserChallenge.find({ 
+      user: userId,
+      completed: true 
+    }).select('challenge');
+    
+    const completedChallengeIds = userCompletedChallenges.map(uc => uc.challenge);
+    
+    // Find active challenges not completed by the user
+    // Filter by 'daily' or 'special' type to ensure it's appropriate for random selection
+    const eligibleChallenges = await Challenge.find({ 
+      active: true, 
+      _id: { $nin: completedChallengeIds },
+      type: { $in: ['daily', 'special'] }
+    });
+    
+    if (eligibleChallenges.length === 0) {
+      // If all challenges are completed, find any active challenge
+      const anyActiveChallenge = await Challenge.findOne({ active: true });
+      
+      if (!anyActiveChallenge) {
+        return res.status(404).json({ message: 'No active challenges found' });
+      }
+      
+      return res.status(200).json({ 
+        challenge: anyActiveChallenge,
+        isNew: false,
+        message: 'You have completed all available challenges! Here is one you can retry.'
+      });
+    }
+    
+    // Select a random challenge from eligible ones
+    const randomIndex = Math.floor(Math.random() * eligibleChallenges.length);
+    const randomChallenge = eligibleChallenges[randomIndex];
+    
+    // Check if user already has this challenge in progress
+    const existingUserChallenge = await UserChallenge.findOne({
+      user: userId,
+      challenge: randomChallenge._id,
+      completed: false
+    });
+    
+    const isNew = !existingUserChallenge;
+    
+    res.status(200).json({
+      challenge: randomChallenge,
+      userProgress: existingUserChallenge || null,
+      isNew
+    });
+  } catch (err) {
+    console.error('Error getting random challenge:', err);
+    res.status(500).json({ message: 'Failed to get random challenge', error: err.message });
+  }
+};
+
+// Mark challenge as complete (alternative endpoint)
+export const markChallengeComplete = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { challengeId } = req.params;
+    
+    // Find user challenge
+    const userChallenge = await UserChallenge.findOne({
+      user: userId,
+      challenge: challengeId,
+      completed: false
+    }).populate('challenge');
+    
+    if (!userChallenge) {
+      return res.status(404).json({ 
+        message: 'Challenge not found, already completed, or not accepted' 
+      });
+    }
+    
+    // Check if challenge has expired
+    if (userChallenge.expiresAt && new Date() > userChallenge.expiresAt) {
+      return res.status(400).json({ message: 'Challenge has expired' });
+    }
+    
+    // Mark as completed
+    userChallenge.completed = true;
+    userChallenge.completedAt = new Date();
+    userChallenge.progress = userChallenge.challenge.requirements.count; // Set to max progress
+    
+    // Award points for completion
+    await Progress.findOneAndUpdate(
+      { user: userId },
+      { 
+        $inc: { points: userChallenge.challenge.points },
+        $push: { 
+          history: {
+            points: userChallenge.challenge.points,
+            reason: 'challenge_complete',
+            description: `Completed challenge: ${userChallenge.challenge.title}`,
+            date: new Date()
+          }
+        }
+      },
+      { new: true, upsert: true }
+    );
+    
+    // Check if there's a related achievement to award
+    if (userChallenge.challenge.relatedAchievement) {
+      // Award the achievement
+      const achievement = await Achievement.findById(
+        userChallenge.challenge.relatedAchievement
+      );
+      
+      if (achievement) {
+        // Create a user-specific copy of the achievement
+        const userAchievement = new Achievement({
+          user: userId,
+          type: achievement.type,
+          title: achievement.title,
+          description: achievement.description,
+          level: achievement.level,
+          points: achievement.points,
+          iconName: achievement.iconName,
+          earnedDate: new Date()
+        });
+        
+        await userAchievement.save();
+      }
+    }
+    
+    await userChallenge.save();
+    
+    res.status(200).json({
+      message: 'Challenge completed successfully!',
+      userChallenge: await UserChallenge.findById(userChallenge._id).populate('challenge'),
+      pointsAwarded: userChallenge.challenge.points
+    });
+  } catch (err) {
+    console.error('Error completing challenge:', err);
+    res.status(500).json({ message: 'Failed to complete challenge', error: err.message });
   }
 };
