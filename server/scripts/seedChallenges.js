@@ -5,186 +5,222 @@ import Achievement from '../models/Achievement.js';
 
 dotenv.config();
 
-// MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/mood-tracker')
-  .then(() => console.log('MongoDB connected for seeding'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/moodtracker')
+  .then(() => console.log('MongoDB connected for seeding challenges'))
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+    process.exit(1);
+  });
 
-// Create initial achievements
-const seedAchievements = async () => {
+const seedChallenges = async () => {
   try {
-    // First, clear existing achievements
-    await Achievement.deleteMany({ user: { $exists: false } });
+    // Clear existing data
+    await Challenge.deleteMany({});
+    console.log('Cleared existing challenges');
     
-    // Create template achievements (not assigned to any user yet)
+    // Create achievements first
     const achievements = [
       {
-        type: 'mood_entries',
+        type: 'consistency',
         title: 'Mood Tracker Beginner',
-        description: 'Track your mood for 7 consecutive days',
+        description: 'Track your mood for the first time',
         level: 1,
-        points: 20,
-        iconName: 'star'
+        points: 10,
+        iconName: 'star',
       },
       {
-        type: 'mood_entries',
-        title: 'Mood Tracking Pro',
-        description: 'Track your mood for 30 consecutive days',
+        type: 'consistency',
+        title: 'Weekly Warrior',
+        description: 'Track your mood every day for a week',
         level: 2,
-        points: 50,
-        iconName: 'trophy'
-      },
-      {
-        type: 'mood_entries',
-        title: 'Detail-Oriented',
-        description: 'Add notes to 15 mood entries',
-        level: 1,
-        points: 15,
-        iconName: 'pencil'
-      },
-      {
-        type: 'habit_completion',
-        title: 'Habit Former',
-        description: 'Complete a habit 10 times',
-        level: 1,
         points: 25,
-        iconName: 'calendar'
+        iconName: 'calendar',
       },
       {
-        type: 'resource_usage',
-        title: 'Self-Improver',
-        description: 'View 5 different resources',
-        level: 1,
-        points: 15,
-        iconName: 'book'
-      }
+        type: 'insight',
+        title: 'Self-Reflector',
+        description: 'Add detailed notes to your mood entries 10 times',
+        level: 2,
+        points: 20,
+        iconName: 'pencil',
+      },
+      {
+        type: 'activity',
+        title: 'Activity Analyst',
+        description: 'Track activities with your moods to identify patterns',
+        level: 2,
+        points: 25,
+        iconName: 'target',
+      },
+      {
+        type: 'mastery',
+        title: 'Mood Master',
+        description: 'Complete 10 challenges',
+        level: 3,
+        points: 50,
+        iconName: 'trophy',
+      },
     ];
-    
-    const createdAchievements = await Achievement.insertMany(achievements);
-    console.log(`${createdAchievements.length} achievements created`);
-    
-    return createdAchievements;
-  } catch (err) {
-    console.error('Error seeding achievements:', err);
-    throw err;
-  }
-};
 
-// Create initial challenges
-const seedChallenges = async (achievements) => {
-  try {
-    // First, clear existing challenges
-    await Challenge.deleteMany({});
-    
-    // Create challenges
+    // Insert achievements
+    const savedAchievements = await Achievement.insertMany(achievements);
+    console.log(`Added ${savedAchievements.length} achievements`);
+
+    // Create challenges with references to achievements
     const challenges = [
       {
-        title: 'First Steps',
+        title: 'First Mood Entry',
+        description: 'Track your mood for the first time',
+        type: 'milestone',
+        requirements: {
+          count: 1,
+          action: 'log_mood'
+        },
+        points: 10,
+        difficultyLevel: 1,
+        icon: 'star',
+        relatedAchievement: savedAchievements[0]._id,
+        active: true,
+        featured: true
+      },
+      {
+        title: '3-Day Streak',
         description: 'Track your mood for 3 consecutive days',
         type: 'daily',
         requirements: {
           count: 3,
           action: 'log_mood'
         },
-        points: 10,
-        duration: 7, // 7 days to complete
+        points: 15,
         difficultyLevel: 1,
-        icon: 'star',
-        relatedAchievement: achievements[0]._id,
-        active: true,
-        featured: true
+        duration: 4, // 4 days to complete
+        icon: 'calendar',
+        active: true
       },
       {
-        title: 'Detailed Tracker',
+        title: 'Weekly Mood Journal',
+        description: 'Track your mood every day for a week',
+        type: 'weekly',
+        requirements: {
+          count: 7,
+          action: 'log_mood'
+        },
+        points: 25,
+        difficultyLevel: 2,
+        duration: 8, // 8 days to complete
+        icon: 'calendar-week',
+        relatedAchievement: savedAchievements[1]._id,
+        active: true
+      },
+      {
+        title: 'Reflection Practice',
         description: 'Add notes to 5 mood entries',
         type: 'milestone',
         requirements: {
           count: 5,
           action: 'add_note'
         },
-        points: 15,
-        duration: null,
-        difficultyLevel: 1,
-        icon: 'pencil',
-        relatedAchievement: achievements[2]._id,
-        active: true,
-        featured: false
-      },
-      {
-        title: 'Consistent Tracker',
-        description: 'Track your mood for 7 consecutive days',
-        type: 'daily',
-        requirements: {
-          count: 7,
-          action: 'log_mood'
-        },
         points: 20,
-        duration: 10, // 10 days to complete
         difficultyLevel: 2,
-        icon: 'calendar',
-        relatedAchievement: achievements[0]._id,
-        active: true,
-        featured: true
+        icon: 'pencil',
+        active: true
       },
       {
-        title: 'Track Your Activities',
-        description: 'Add activities to 5 mood entries',
+        title: 'Activity Tracker',
+        description: 'Track activities with your moods 5 times',
         type: 'milestone',
         requirements: {
           count: 5,
           action: 'add_activities'
         },
-        points: 15,
-        duration: null,
-        difficultyLevel: 1,
+        points: 20,
+        difficultyLevel: 2,
         icon: 'target',
-        relatedAchievement: null,
-        active: true,
-        featured: false
+        relatedAchievement: savedAchievements[3]._id,
+        active: true
       },
       {
-        title: 'Mood Master',
-        description: 'Track your mood for 30 consecutive days',
+        title: 'Deep Insights',
+        description: 'Add detailed notes to 10 mood entries',
+        type: 'milestone',
+        requirements: {
+          count: 10,
+          action: 'add_note'
+        },
+        points: 30,
+        difficultyLevel: 3,
+        icon: 'book',
+        relatedAchievement: savedAchievements[2]._id,
+        active: true
+      },
+      {
+        title: 'Morning Check-in',
+        description: 'Track your mood before 10 AM',
         type: 'daily',
         requirements: {
-          count: 30,
-          action: 'log_mood'
+          count: 1,
+          action: 'morning_checkin'
         },
-        points: 50,
-        duration: 35, // 35 days to complete
-        difficultyLevel: 3,
-        icon: 'trophy',
-        relatedAchievement: achievements[1]._id,
-        active: true,
-        featured: false
+        points: 10,
+        difficultyLevel: 1,
+        duration: 2,
+        icon: 'sun',
+        active: true
+      },
+      {
+        title: 'Evening Reflection',
+        description: 'Track your mood after 6 PM',
+        type: 'daily',
+        requirements: {
+          count: 1,
+          action: 'evening_checkin'
+        },
+        points: 10,
+        difficultyLevel: 1,
+        duration: 2,
+        icon: 'moon',
+        active: true
+      },
+      {
+        title: 'Weekend Warrior',
+        description: 'Track your mood on both Saturday and Sunday',
+        type: 'weekly',
+        requirements: {
+          count: 2,
+          action: 'weekend_checkin'
+        },
+        points: 15,
+        difficultyLevel: 2,
+        duration: 3,
+        icon: 'calendar-weekend',
+        active: true
+      },
+      {
+        title: 'Gratitude Practice',
+        description: `Add three things you're grateful for in your notes`,
+        type: 'special',
+        requirements: {
+          count: 1,
+          action: 'add_gratitude'
+        },
+        points: 15,
+        difficultyLevel: 2,
+        icon: 'heart',
+        active: true
       }
     ];
-    
-    const createdChallenges = await Challenge.insertMany(challenges);
-    console.log(`${createdChallenges.length} challenges created`);
-    
-    return createdChallenges;
-  } catch (err) {
-    console.error('Error seeding challenges:', err);
-    throw err;
-  }
-};
 
-// Run the seeding
-const runSeed = async () => {
-  try {
-    // Create achievements first
-    const achievements = await seedAchievements();
-    
-    // Then create challenges with achievement references
-    await seedChallenges(achievements);
-    
-    console.log('Seeding completed successfully!');
+    // Insert challenges
+    await Challenge.insertMany(challenges);
+    console.log(`Added ${challenges.length} challenges`);
+
+    console.log('Database seeded successfully!');
     process.exit(0);
-  } catch (err) {
-    console.error('Error during seeding:', err);
+  } catch (error) {
+    console.error('Error seeding database:', error);
     process.exit(1);
   }
 };
 
-runSeed();
+seedChallenges();

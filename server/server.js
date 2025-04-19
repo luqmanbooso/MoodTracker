@@ -8,6 +8,7 @@ import resourceRoutes from './routes/resourceRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import progressRoutes from './routes/progressRoutes.js';
 import { seedResources } from './controllers/resourceController.js';
+import { initializeDatabase } from './utils/initDb.js';
 
 dotenv.config();
 const app = express();
@@ -26,11 +27,15 @@ app.use('/api/progress', progressRoutes);
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-}).then(() => {
+}).then(async () => {
   console.log('Connected to MongoDB');
+  
+  // Initialize database with test data
+  await initializeDatabase();
   
   // Seed initial resources
   seedResources();
   
+  // Start the server after initialization
   app.listen(5000, () => console.log('Server running on port 5000'));
 }).catch((err) => console.error('Error connecting to MongoDB:', err));

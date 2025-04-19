@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const userChallengeSchema = new mongoose.Schema({
+const UserChallengeSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -13,30 +13,29 @@ const userChallengeSchema = new mongoose.Schema({
   },
   progress: {
     type: Number,
-    default: 0,
-    required: true
+    default: 0
   },
   completed: {
     type: Boolean,
     default: false
   },
-  completedAt: {
-    type: Date,
-    default: null
-  },
   startedAt: {
     type: Date,
     default: Date.now
   },
+  completedAt: {
+    type: Date,
+    default: null
+  },
   expiresAt: {
     type: Date,
     default: null
+  },
+  assignedDate: {
+    type: Date,
+    default: Date.now
   }
-}, { timestamps: true });
+});
 
-// Compound index to ensure a user can only have one active instance of each challenge
-userChallengeSchema.index({ user: 1, challenge: 1 }, { unique: true });
-
-const UserChallenge = mongoose.model('UserChallenge', userChallengeSchema);
-
+const UserChallenge = mongoose.models.UserChallenge || mongoose.model('UserChallenge', UserChallengeSchema);
 export default UserChallenge;

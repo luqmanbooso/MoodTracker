@@ -1,145 +1,132 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
-  getChallenges, 
-  getUserChallenges, 
-  acceptChallenge as apiAcceptChallenge,
-  updateChallengeProgress as apiUpdateProgress
-} from '../services/challengeApi';
-import { useProgress } from './ProgressContext';
+import axios from 'axios';
 
-// Create context
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 const ChallengeContext = createContext();
 
 export const ChallengeProvider = ({ children }) => {
-  const [challenges, setChallenges] = useState([]);
+  const [availableChallenges, setAvailableChallenges] = useState([]);
   const [userChallenges, setUserChallenges] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { awardPoints } = useProgress();
 
-  // Fetch challenges and user progress
+  // Fetch challenges on component mount
   useEffect(() => {
-    const fetchChallenges = async () => {
-      setIsLoading(true);
-      try {
-        // Get all challenges with user progress
-        const allChallenges = await getChallenges();
-        setChallenges(allChallenges);
-        
-        // Get user's accepted challenges
-        const userChallengeData = await getUserChallenges();
-        setUserChallenges(userChallengeData);
-        
-        setError(null);
-      } catch (err) {
-        console.error('Error loading challenges:', err);
-        setError('Failed to load challenges');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchChallenges();
   }, []);
+
+  // Fetch all challenges and user challenges
+  const fetchChallenges = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Get available challenges first
+      console.log('Fetching available challenges...');
+      const challengesResponse = await axios.get(`${API_URL}/challenges`);
+      setAvailableChallenges(challengesResponse.data || []);
+      
+      // Try to get user challenges, but don't fail if it doesn't work
+      try {
+        console.log('Fetching user challenges...');
+        const userChallengesResponse = await axios.get(`${API_URL}/challenges/user`);
+        setUserChallenges(userChallengesResponse.data || []);
+      } catch (userErr) {
+        console.warn('Error fetching user challenges (continuing anyway):', userErr);
+        setUserChallenges([]); // Set empty array on error
+      }
+    } catch (err) {
+      console.error('Error fetching challenges:', err);
+      setError('Failed to load challenges');
+      setAvailableChallenges([]); // Set empty arrays on error
+      setUserChallenges([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Accept a challenge
   const acceptChallenge = async (challengeId) => {
     try {
-      const result = await apiAcceptChallenge(challengeId);
+      const response = await axios.post(
+        `${API_URL}/challenges/${challengeId}/accept`
+      );
       
-      // Update state
-      setUserChallenges(prev => [...prev, result.userChallenge]);
+      if (response.data.userChallenge) {
+        setUserChallenges(prev => [...prev, response.data.userChallenge]);
+      }
       
-      // Update challenges with accept status
-      setChallenges(prev => prev.map(challenge => 
-        challenge._id === challengeId 
-          ? { ...challenge, accepted: true, progress: 0 }
-          : challenge
-      ));
-      
-      return result;
+      return response.data;
     } catch (err) {
       console.error('Error accepting challenge:', err);
-      setError('Failed to accept challenge');
       throw err;
     }
   };
-  
-  // Update challenge progress
-  const updateChallengeProgress = async (challengeId, progressIncrement = 1, action) => {
+
+  // Track an action
+  const trackAction = async (action, payload = {}) => {
     try {
-      // Find current user challenge
-      const currentChallenge = userChallenges.find(
-        uc => uc.challenge._id === challengeId
+      // Find all user challenges that have this action requirement and aren't completed
+      const relevantChallenges = userChallenges.filter(
+        uc => !uc.completed && uc.challenge?.requirements?.action === action
       );
       
-      if (!currentChallenge) {
-        throw new Error('Challenge not found or not accepted');
-      }
-      
-      // Calculate new progress
-      const newProgress = Math.min(
-        currentChallenge.progress + progressIncrement,
-        currentChallenge.challenge.requirements.count
-      );
-      
-      const result = await apiUpdateProgress(challengeId, newProgress, action);
-      
-      // Update local state
-      setUserChallenges(prev => prev.map(uc => 
-        uc.challenge._id === challengeId
-          ? result.userChallenge
-          : uc
-      ));
-      
-      // If challenge was completed, show notification through progress system
-      if (result.completed) {
-        // This will use the ProgressContext to show a notification
-        awardPoints(
-          result.pointsAwarded,
-          'challenge_complete',
-          `Completed challenge: ${result.userChallenge.challenge.title}`
+      for (const userChallenge of relevantChallenges) {
+        // Update progress locally
+        const newProgress = userChallenge.progress + 1;
+        
+        // Check if challenge is completed
+        const isCompleted = newProgress >= userChallenge.challenge.requirements.count;
+        
+        // Update the challenge progress on the server
+        await axios.patch(
+          `${API_URL}/challenges/${userChallenge.challenge._id}/progress`,
+          { progress: newProgress }
+        );
+        
+        // Update local state
+        setUserChallenges(prev => 
+          prev.map(uc => 
+            uc._id === userChallenge._id 
+              ? { ...uc, progress: newProgress, completed: isCompleted } 
+              : uc
+          )
         );
       }
       
-      return result;
+      return {
+        updated: relevantChallenges.length > 0,
+        challenges: relevantChallenges
+      };
     } catch (err) {
-      console.error('Error updating challenge progress:', err);
-      setError('Failed to update challenge progress');
+      console.error(`Error tracking action ${action}:`, err);
       throw err;
     }
   };
-  
-  // Track challenge action (e.g., when user logs a mood)
-  const trackAction = async (actionType) => {
+
+  // Get a random challenge (for daily challenge)
+  const getRandomChallenge = async () => {
     try {
-      // Find challenges that match this action type
-      const matchingChallenges = userChallenges.filter(
-        uc => !uc.completed && 
-        uc.challenge.requirements.action === actionType
-      );
-      
-      // Update progress for each matching challenge
-      for (const challenge of matchingChallenges) {
-        await updateChallengeProgress(challenge.challenge._id, 1, actionType);
-      }
+      const response = await axios.get(`${API_URL}/challenges/random`);
+      return response.data;
     } catch (err) {
-      console.error('Error tracking challenge action:', err);
+      console.error('Error getting random challenge:', err);
+      throw err;
     }
   };
 
   return (
-    <ChallengeContext.Provider 
-      value={{
-        challenges,
-        userChallenges,
-        isLoading,
-        error,
-        acceptChallenge,
-        updateChallengeProgress,
-        trackAction
-      }}
-    >
+    <ChallengeContext.Provider value={{
+      availableChallenges,
+      userChallenges,
+      loading,
+      error,
+      fetchChallenges,
+      acceptChallenge,
+      trackAction,
+      getRandomChallenge
+    }}>
       {children}
     </ChallengeContext.Provider>
   );
