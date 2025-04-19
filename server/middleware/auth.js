@@ -42,15 +42,10 @@ const auth = (req, res, next) => {
  * Development middleware that bypasses authentication
  * Just adds a mock user to each request
  */
+// Mock authentication middleware for development purposes
 export const authenticateUser = (req, res, next) => {
-  // Add mock user to request
-  req.user = {
-    _id: "dev-user-123", 
-    name: "Development User",
-    email: "dev@example.com",
-    isAdmin: true
-  };
-  
+  // Set a default user ID
+  req.user = { id: '000000000000000000000000', name: 'TestUser' };
   next();
 };
 

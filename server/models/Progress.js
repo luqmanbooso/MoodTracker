@@ -8,7 +8,7 @@ const pointHistorySchema = new mongoose.Schema({
   reason: {
     type: String,
     required: true,
-    enum: ['mood_entry', 'challenge_complete', 'streak', 'resource_complete', 'achievement']
+    enum: ['mood_entry', 'challenge_complete', 'habit_complete', 'goal_progress', 'goal_complete', 'streak', 'resource_complete', 'achievement']
   },
   description: {
     type: String,
@@ -38,7 +38,23 @@ const progressSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  habitCompletionCount: {
+    type: Number,
+    default: 0
+  },
+  goalCompletionCount: {
+    type: Number,
+    default: 0
+  },
+  goalProgressCount: {
+    type: Number,
+    default: 0
+  },
   challengeCompletionCount: {
+    type: Number,
+    default: 0
+  },
+  resourceViewCount: {
     type: Number,
     default: 0
   },
@@ -51,10 +67,20 @@ const progressSchema = new mongoose.Schema({
     default: 0
   },
   lastActive: {
-    type: Date,
-    default: Date.now
+    type: Date
   },
-  pointsHistory: [pointHistorySchema]
+  pointsHistory: [pointHistorySchema],
+  weeklyProgress: [{
+    week: String, // Format: YYYY-WW
+    moodEntries: Number,
+    habitsCompleted: Number,
+    goalsProgressed: Number,
+    pointsEarned: Number
+  }],
+  achievements: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Achievement'
+  }]
 }, { timestamps: true });
 
 const Progress = mongoose.model('Progress', progressSchema);

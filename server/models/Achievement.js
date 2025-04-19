@@ -9,7 +9,7 @@ const achievementSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['mood_entries', 'streaks', 'challenge_completion', 'resource_usage']
+    enum: ['mood_entries', 'streaks', 'habit_completion', 'goal_completion', 'challenge_completion', 'resource_usage']
   },
   title: {
     type: String,
@@ -21,15 +21,18 @@ const achievementSchema = new mongoose.Schema({
   },
   level: {
     type: Number,
-    default: 1
+    required: true,
+    min: 1,
+    max: 5
   },
   points: {
     type: Number,
+    required: true,
     default: 10
   },
   iconName: {
     type: String,
-    default: 'emoji_events'
+    default: 'trophy'
   },
   earnedDate: {
     type: Date,

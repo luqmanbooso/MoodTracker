@@ -55,31 +55,21 @@ export const updatePoints = async (userId, points, reason, description) => {
 /**
  * Calculate user level based on points
  */
-const calculateLevel = (points) => {
-  // Level thresholds - can be adjusted
-  const levels = [
-    0,      // Level 1
-    100,    // Level 2
-    300,    // Level 3
-    600,    // Level 4
-    1000,   // Level 5
-    1500,   // Level 6
-    2100,   // Level 7
-    2800,   // Level 8
-    3600,   // Level 9
-    4500    // Level 10
-  ];
+export const calculateLevel = (points) => {
+  // Level thresholds - exponential curve
+  const thresholds = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500, 5500];
   
-  let level = 1;
-  for (let i = 1; i < levels.length; i++) {
-    if (points >= levels[i]) {
-      level = i + 1;
+  // Find current level
+  let currentLevel = 1;
+  for (let i = 1; i < thresholds.length; i++) {
+    if (points >= thresholds[i]) {
+      currentLevel = i + 1;
     } else {
       break;
     }
   }
   
-  return level;
+  return currentLevel;
 };
 
 /**
