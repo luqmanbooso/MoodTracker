@@ -73,6 +73,21 @@ export const calculateLevel = (points) => {
 };
 
 /**
+ * Calculate points needed for next level
+ */
+export const pointsForNextLevel = (points) => {
+  const level = calculateLevel(points);
+  const thresholds = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500, 5500];
+  
+  if (level >= thresholds.length) {
+    // Max level reached, return a value 1000 points higher than current
+    return points + 1000;
+  }
+  
+  return thresholds[level] - points;
+};
+
+/**
  * Check for and award achievements
  */
 export const checkForAchievements = async (userId, type) => {

@@ -1,25 +1,52 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getProgress, getAchievements, getStats, awardPoints as apiAwardPoints } from '../services/progressApi';
 
 // Create context
 const ProgressContext = createContext(null);
 
-// Demo data
-const DEMO_ACHIEVEMENTS = [
-  { id: 'first_mood', title: 'First Mood', description: 'Logged your first mood', completed: true, date: '2025-04-15' },
-  { id: 'week_streak', title: 'Week Streak', description: 'Logged moods for 7 consecutive days', completed: true, date: '2025-04-16' },
-  { id: 'month_streak', title: 'Month Streak', description: 'Logged moods for 30 consecutive days', completed: false }
-];
-
 export const ProgressProvider = ({ children }) => {
-  // State initialization with demo data
-  const [points, setPoints] = useState(120);
-  const [level, setLevel] = useState(3);
-  const [achievements, setAchievements] = useState(DEMO_ACHIEVEMENTS);
+  // State based on actual data from API
+  const [points, setPoints] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [achievements, setAchievements] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [stats, setStats] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   // Calculate level progress
   const levelProgress = (points % 100) / 100;
   const experienceToNextLevel = 100 - (points % 100);
+  
+  // Load initial data
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Get user progress data
+        const progressData = await getProgress();
+        setPoints(progressData.points);
+        setLevel(progressData.level);
+        
+        // Get achievements
+        const achievementsData = await getAchievements();
+        setAchievements(achievementsData);
+        
+        // Get stats
+        const statsData = await getStats();
+        setStats(statsData);
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error loading progress data:', err);
+        setError('Failed to load progress data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, []);
   
   // Function to show notifications
   const showNotification = (message) => {
@@ -32,11 +59,35 @@ export const ProgressProvider = ({ children }) => {
     }, 5000);
   };
   
-  // Award points function
+  // Award points function - actually calls the API
   const awardPoints = async (amount, reason, description) => {
-    setPoints(prev => prev + amount);
-    showNotification(`+${amount} points: ${description}`);
-    return { success: true };
+    try {
+      // Call the API
+      const result = await apiAwardPoints(amount, reason, description);
+      
+      // Update local state
+      setPoints(result.points);
+      setLevel(result.level);
+      
+      // Show notification
+      showNotification(`+${amount} points: ${description}`);
+      
+      // If there are new achievements, update achievements state
+      if (result.newAchievements && result.newAchievements.length > 0) {
+        setAchievements(prev => [...result.newAchievements, ...prev]);
+        
+        // Show notifications for new achievements
+        result.newAchievements.forEach(achievement => {
+          showNotification(`🏆 New achievement: ${achievement.title}`);
+        });
+      }
+      
+      return result;
+    } catch (err) {
+      console.error('Error awarding points:', err);
+      setError('Failed to award points');
+      return { success: false, error: err.message };
+    }
   };
   
   // Context value
@@ -47,7 +98,10 @@ export const ProgressProvider = ({ children }) => {
     notifications,
     awardPoints,
     levelProgress,
-    experienceToNextLevel
+    experienceToNextLevel,
+    stats,
+    isLoading,
+    error
   };
   
   return (

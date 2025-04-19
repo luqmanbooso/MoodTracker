@@ -1,55 +1,35 @@
 import { useState, useEffect } from 'react';
+import { awardPoints, getProgress } from '../services/progressApi';
 
-// Define point values for different actions
-const POINTS = {
+// Action point values
+const POINT_VALUES = {
   LOG_MOOD: 10,
   ADD_NOTE: 5,
   ADD_ACTIVITIES: 5,
   ADD_TAGS: 5,
-  COMPLETE_CHALLENGE: 20,
-  CREATE_HABIT: 15,
-  COMPLETE_HABIT: 10,
-  MAINTAIN_STREAK_3: 30,  // 3-day streak
-  MAINTAIN_STREAK_7: 100, // 7-day streak
-  MAINTAIN_STREAK_30: 500, // 30-day streak
-  SET_GOAL: 20,
-  COMPLETE_MILESTONE: 25,
-  COMPLETE_GOAL: 100,
-  DAILY_REFLECTION: 15
+  COMPLETE_HABIT: 15,
+  COMPLETE_MILESTONE: 20,
+  COMPLETE_GOAL: 50,
+  COMPLETE_CHALLENGE: 25,
+  DAILY_STREAK: 10,
+  WEEKLY_STREAK: 30,
+  MONTHLY_STREAK: 100
 };
-
-// Define levels and their thresholds
-const LEVELS = [
-  { level: 1, name: "Beginner", threshold: 0, reward: "Access to basic tracking" },
-  { level: 2, name: "Observer", threshold: 50, reward: "Unlock mood patterns" },
-  { level: 3, name: "Tracker", threshold: 150, reward: "Unlock weekly insights" },
-  { level: 4, name: "Analyzer", threshold: 300, reward: "Unlock detailed analytics" },
-  { level: 5, name: "Mindfulness Adept", threshold: 500, reward: "Unlock personalized tips" },
-  { level: 6, name: "Emotion Master", threshold: 750, reward: "Unlock advanced predictions" },
-  { level: 7, name: "Wellbeing Guru", threshold: 1000, reward: "Unlock theme customization" },
-  { level: 8, name: "Mood Sage", threshold: 1500, reward: "Unlock all features" },
-  { level: 9, name: "Enlightened", threshold: 2000, reward: "Special badge and recognition" },
-  { level: 10, name: "Emotional Intelligence Expert", threshold: 3000, reward: "Master badge and status" }
-];
 
 const PointsSystem = ({ userId = 'default-user' }) => {
   const [points, setPoints] = useState(0);
-  const [level, setLevel] = useState(LEVELS[0]);
-  const [nextLevel, setNextLevel] = useState(LEVELS[1]);
+  const [level, setLevel] = useState({ level: 1, name: "Beginner" });
+  const [nextLevel, setNextLevel] = useState({ level: 2, name: "Novice", threshold: 100 });
   const [pointsHistory, setPointsHistory] = useState([]);
   const [justEarned, setJustEarned] = useState(null);
   const [showAnimation, setShowAnimation] = useState(false);
   const [levelUp, setLevelUp] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(0);
 
   // Load points data on component mount
   useEffect(() => {
     loadPointsData();
   }, [userId]);
-
-  // Update level when points change
-  useEffect(() => {
-    updateLevel();
-  }, [points]);
 
   // Reset animation state after showing it
   useEffect(() => {
@@ -72,65 +52,140 @@ const PointsSystem = ({ userId = 'default-user' }) => {
     }
   }, [levelUp]);
 
-  const loadPointsData = () => {
-    // In a real app, this would fetch from backend
-    // For now, we'll use localStorage
-    const savedData = localStorage.getItem(`points-data-${userId}`);
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setPoints(parsedData.points || 0);
-      setPointsHistory(parsedData.history || []);
+  const loadPointsData = async () => {
+    try {
+      const progressData = await getProgress();
+      
+      // Set points, level
+      setPoints(progressData.points);
+      
+      // Determine level name based on level number
+      let levelName = "Beginner";
+      if (progressData.level >= 10) levelName = "Emotional Intelligence Expert";
+      else if (progressData.level >= 8) levelName = "Mindfulness Master";
+      else if (progressData.level >= 6) levelName = "Emotion Navigator";
+      else if (progressData.level >= 4) levelName = "Wellbeing Enthusiast";
+      else if (progressData.level >= 2) levelName = "Novice";
+      
+      setLevel({
+        level: progressData.level,
+        name: levelName,
+        threshold: progressData.points - (progressData.points % 100)
+      });
+      
+      // Calculate next level
+      setNextLevel({
+        level: progressData.level + 1,
+        name: "Next Level",
+        threshold: progressData.points + (100 - (progressData.points % 100))
+      });
+      
+      // Set points history
+      if (progressData.recentHistory) {
+        setPointsHistory(progressData.recentHistory);
+      }
+    } catch (error) {
+      console.error('Error loading points data:', error);
     }
   };
 
-  const savePointsData = () => {
-    const data = {
-      points,
-      history: pointsHistory
-    };
-    localStorage.setItem(`points-data-${userId}`, JSON.stringify(data));
-  };
-
-  const updateLevel = () => {
-    // Find current level based on points
-    const currentLevel = [...LEVELS].reverse().find(l => points >= l.threshold);
-    if (currentLevel && currentLevel.level !== level.level) {
-      setLevel(currentLevel);
-      setLevelUp(true);
+  // Award points for specific actions
+  const awardPointsForAction = async (action) => {
+    // Prevent spamming by requiring at least 1 second between point awards
+    const now = Date.now();
+    if (now - lastUpdateTime < 1000) {
+      return 0;
+    }
+    setLastUpdateTime(now);
+    
+    // Get points for this action
+    const pointsToAdd = POINT_VALUES[action] || 1;
+    
+    // Generate a description based on the action
+    let description = "Points earned";
+    let reason = "misc";
+    
+    switch(action) {
+      case 'LOG_MOOD': 
+        description = "Logged your mood";
+        reason = "mood_entry";
+        break;
+      case 'ADD_NOTE': 
+        description = "Added mood details";
+        reason = "mood_entry";
+        break;
+      case 'ADD_ACTIVITIES':
+        description = "Tracked activities";
+        reason = "mood_entry";
+        break;
+      case 'ADD_TAGS':
+        description = "Tagged your mood";
+        reason = "mood_entry"; 
+        break;
+      case 'COMPLETE_HABIT':
+        description = "Completed a habit";
+        reason = "habit_complete";
+        break;
+      case 'COMPLETE_MILESTONE':
+        description = "Reached a goal milestone";
+        reason = "goal_progress";
+        break;
+      case 'COMPLETE_GOAL':
+        description = "Achieved a goal";
+        reason = "goal_complete";
+        break;
+      case 'COMPLETE_CHALLENGE':
+        description = "Completed a challenge";
+        reason = "challenge_complete";
+        break;
+      default:
+        description = "Activity completed";
+        reason = "misc";
     }
     
-    // Find next level
-    const nextLevelIndex = LEVELS.findIndex(l => l.level === currentLevel.level) + 1;
-    if (nextLevelIndex < LEVELS.length) {
-      setNextLevel(LEVELS[nextLevelIndex]);
-    } else {
-      setNextLevel(null); // Max level reached
+    try {
+      // Call the API to award points
+      const result = await awardPoints(pointsToAdd, reason, description);
+      
+      // Update local state with new data
+      setPoints(result.points);
+      
+      // Check for level up
+      if (result.level > level.level) {
+        setLevelUp(true);
+        
+        // Update level information
+        let newLevelName = "Beginner";
+        if (result.level >= 10) newLevelName = "Emotional Intelligence Expert";
+        else if (result.level >= 8) newLevelName = "Mindfulness Master";
+        else if (result.level >= 6) newLevelName = "Emotion Navigator";
+        else if (result.level >= 4) newLevelName = "Wellbeing Enthusiast";
+        else if (result.level >= 2) newLevelName = "Novice";
+        
+        setLevel({
+          level: result.level,
+          name: newLevelName,
+          threshold: result.points - (result.points % 100)
+        });
+        
+        // Update next level
+        setNextLevel({
+          level: result.level + 1,
+          name: "Next Level",
+          threshold: result.points + (100 - (result.points % 100))
+        });
+      }
+      
+      // Show animation
+      setJustEarned({ action, points: pointsToAdd });
+      setShowAnimation(true);
+      
+      return pointsToAdd;
+      
+    } catch (error) {
+      console.error('Error awarding points:', error);
+      return 0;
     }
-  };
-
-  const awardPoints = (action, details = {}) => {
-    if (!POINTS[action]) return;
-    
-    const pointsToAdd = POINTS[action];
-    const newTotal = points + pointsToAdd;
-    
-    // Create history entry
-    const historyEntry = {
-      action,
-      points: pointsToAdd,
-      timestamp: new Date().toISOString(),
-      details
-    };
-    
-    setPoints(newTotal);
-    setPointsHistory(prev => [historyEntry, ...prev]);
-    setJustEarned({ action, points: pointsToAdd });
-    setShowAnimation(true);
-    
-    // Save updated data
-    setTimeout(savePointsData, 500);
-    
-    return pointsToAdd;
   };
 
   // Calculate progress to next level
@@ -155,10 +210,10 @@ const PointsSystem = ({ userId = 'default-user' }) => {
     // Add these pre-formatted properties for direct rendering
     levelNumber: level.level,
     levelName: level.name,
-    nextLevel: nextLevel ? nextLevel.threshold : null,
+    nextLevel: nextLevel.threshold,
     progress: calculateProgress(),
     pointsHistory,
-    awardPoints,
+    awardPoints: awardPointsForAction,
     showAnimation,
     justEarned,
     levelUp,
