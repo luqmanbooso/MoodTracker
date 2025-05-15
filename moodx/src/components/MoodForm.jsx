@@ -7,23 +7,21 @@ import { useProgress } from '../contexts/ProgressContext';
 import '../styles/MoodForm.css';
 
 const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = false, onSubmit, initialMood = '', initialIntensity = 3, initialNotes = '', moods = [], habits = [], goals = [] }) => {
-  const { darkMode } = useTheme();
-  
   // Fix the hook usage - don't conditionally call hooks
   const progress = useProgress();
   // Safely access the awardPoints function
   const awardPoints = progress ? progress.awardPoints : null;
 
-  // Create theme-aware styles
+  // Create fixed dark theme styles
   const styles = {
-    primaryColor: darkMode ? 'emerald' : 'orange',
-    primaryText: darkMode ? 'text-emerald-500' : 'text-orange-500',
-    primaryBg: darkMode ? 'bg-emerald-500' : 'bg-orange-500',
-    primaryHover: darkMode ? 'hover:bg-emerald-600' : 'hover:bg-orange-600',
-    secondaryText: darkMode ? 'text-gray-300' : 'text-gray-700',
-    headingText: darkMode ? 'text-white' : 'text-gray-800',
-    labelText: darkMode ? 'text-gray-300' : 'text-gray-700',
-    borderColor: darkMode ? 'border-gray-700' : 'border-gray-200',
+    primaryColor: 'emerald',
+    primaryText: 'text-emerald-500',
+    primaryBg: 'bg-emerald-500',
+    primaryHover: 'hover:bg-emerald-600',
+    secondaryText: 'text-gray-300',
+    headingText: 'text-white',
+    labelText: 'text-gray-300',
+    borderColor: 'border-gray-700',
   };
 
   const [moodData, setMoodData] = useState({
@@ -199,11 +197,11 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
   };
 
   return (
-    <div className={`${darkMode ? 'bg-gray-800' : 'bg-white'} rounded-lg relative ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+    <div className="bg-gray-800 rounded-lg relative text-white">
       {/* Success animation - shows briefly after submitting */}
       {showSuccess && (
         <div className="absolute inset-0 bg-black bg-opacity-30 rounded-lg flex items-center justify-center z-10 animate-fade-out">
-          <div className={`${darkMode ? 'bg-gray-700' : 'bg-white'} rounded-full p-6 shadow-lg animate-scale-in`}>
+          <div className="bg-gray-700 rounded-full p-6 shadow-lg animate-scale-in">
             <div className="text-5xl animate-bounce">✅</div>
           </div>
         </div>
@@ -220,7 +218,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
                 className={`flex flex-col items-center p-3 rounded-lg transition-all duration-300 ${
                   moodData.mood === option
                     ? `${moodColors[option]} text-white shadow-md transform scale-105`
-                    : `${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} hover:shadow`
+                    : `bg-gray-700 hover:bg-gray-600 text-gray-200 hover:shadow`
                 }`}
               >
                 <span className="text-2xl mb-1">{moodIcons[option]}</span>
@@ -268,7 +266,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
           
           {/* Mood selection with improved visual feedback */}
           <div className="mb-6">
-            <label className={`block ${styles.labelText} font-medium mb-2`}>Your mood</label>
+            <label className="block text-gray-300 font-medium mb-2">Your mood</label>
             <div className="grid grid-cols-5 gap-2">
               {moodOptions.map(option => (
                 <button
@@ -278,7 +276,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
                   className={`flex flex-col items-center p-3 rounded-lg transition-all duration-300 ${
                     moodData.mood === option
                       ? `${moodColors[option]} text-white shadow-md transform scale-105`
-                      : `${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 text-gray-700'} hover:shadow`
+                      : `bg-gray-700 hover:bg-gray-600 text-gray-200 hover:shadow`
                   }`}
                 >
                   <span className="text-2xl mb-1">{moodIcons[option]}</span>
@@ -301,15 +299,15 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
           {/* Custom mood with instant-update dropdown */}
           {customMoodCategories && customMoodCategories.length > 0 && (
             <div className="mb-6">
-              <label className={`block ${styles.labelText} font-medium mb-2`}>
+              <label className="block text-gray-300 font-medium mb-2">
                 Any specific mood? <span className="text-gray-500 text-sm">(optional)</span>
               </label>
               <select
                 name="customMood"
                 value={moodData.customMood}
                 onChange={handleChange}
-                className={`w-full p-3 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring focus:ring-${styles.primaryColor}-300 focus:border-${styles.primaryColor}-500 transition-all ${
-                  lastAction === 'customMood' ? `border-${styles.primaryColor}-500 ring ring-${styles.primaryColor}-200` : ''
+                className={`w-full p-3 border rounded-lg bg-gray-700 border-gray-600 text-white focus:ring focus:ring-emerald-300 focus:border-emerald-500 transition-all ${
+                  lastAction === 'customMood' ? `border-emerald-500 ring ring-emerald-200` : ''
                 }`}
               >
                 <option value="">Select a specific mood</option>
@@ -322,7 +320,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
           
           {/* Intensity slider with visual feedback */}
           <div className="mb-6">
-            <label className={`block ${styles.labelText} font-medium mb-2`}>
+            <label className="block text-gray-300 font-medium mb-2">
               How intense is this feeling?
             </label>
             <div className="flex items-center mb-2">
@@ -351,7 +349,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
           
           {/* Activities with icons and interactive buttons */}
           <div className="mb-6">
-            <label className={`block ${styles.labelText} font-medium mb-2`}>What were you doing today?</label>
+            <label className="block text-gray-300 font-medium mb-2">What were you doing today?</label>
             <div className="flex flex-wrap gap-2">
               {activityOptions.map(activity => (
                 <button
@@ -360,8 +358,8 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
                   onClick={() => handleActivityToggle(activity)}
                   className={`px-4 py-2 rounded-full text-sm transition-all duration-300 flex items-center ${
                     moodData.activities.includes(activity)
-                      ? `bg-${styles.primaryColor}-500 text-white transform scale-105 shadow-md`
-                      : `${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`
+                      ? `bg-emerald-500 text-white transform scale-105 shadow-md`
+                      : `bg-gray-700 text-gray-200 hover:bg-gray-600`
                   }`}
                 >
                   <span className="mr-1">{activityIcons[activity]}</span>
@@ -373,7 +371,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
           
           {/* Tags with interactive input */}
           <div className="mb-6">
-            <label className={`block ${styles.labelText} font-medium mb-2`}>Tags</label>
+            <label className="block text-gray-300 font-medium mb-2">Tags</label>
             <div className="flex items-center gap-2 mb-2">
               <input
                 type="text"
@@ -381,12 +379,12 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleAddTag(e)}
                 placeholder="Add a tag and press Enter..."
-                className={`flex-1 p-3 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring focus:ring-${styles.primaryColor}-300 focus:border-${styles.primaryColor}-500 transition-all`}
+                className="flex-1 p-3 border rounded-lg bg-gray-700 border-gray-600 text-white focus:ring focus:ring-emerald-300 focus:border-emerald-500 transition-all"
               />
               <button
                 type="button"
                 onClick={handleAddTag}
-                className={`px-4 py-3 ${styles.primaryBg} text-white rounded-lg ${styles.primaryHover} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors`}
+                className="px-4 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-colors"
               >
                 Add
               </button>
@@ -395,7 +393,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
             {moodData.tags.length > 0 && (
               <div className="flex flex-wrap gap-2 mt-2">
                 {moodData.tags.map(tag => (
-                  <div key={tag} className={`flex items-center gap-1 ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} px-3 py-1 rounded-full group transition-colors`}>
+                  <div key={tag} className="flex items-center gap-1 bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-full group transition-colors">
                     <span className="text-sm">#{tag}</span>
                     <button
                       type="button"
@@ -414,15 +412,15 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
           
           {/* Notes with friendly prompt */}
           <div className="mb-6">
-            <label className={`block ${styles.labelText} font-medium mb-2`}>
+            <label className="block text-gray-300 font-medium mb-2">
               What's on your mind? <span className="text-gray-500 text-sm">(optional)</span>
             </label>
             <textarea
               name="note"
               value={moodData.note}
               onChange={handleChange}
-              className={`w-full p-3 border rounded-lg ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300'} focus:ring focus:ring-${styles.primaryColor}-300 focus:border-${styles.primaryColor}-500 transition-all ${
-                lastAction === 'note' ? `border-${styles.primaryColor}-500 ring ring-${styles.primaryColor}-200` : ''
+              className={`w-full p-3 border rounded-lg bg-gray-700 border-gray-600 text-white focus:ring focus:ring-emerald-300 focus:border-emerald-500 transition-all ${
+                lastAction === 'note' ? `border-emerald-500 ring ring-emerald-200` : ''
               }`}
               rows="4"
               placeholder="Feel free to jot down anything about your day..."
@@ -436,7 +434,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full bg-gradient-to-r from-${styles.primaryColor}-500 to-indigo-600 text-white py-3 px-4 rounded-lg ${styles.primaryHover} transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2`}
+            className="w-full bg-gradient-to-r from-emerald-500 to-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-emerald-600 transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
           >
             {isLoading ? (
               <>

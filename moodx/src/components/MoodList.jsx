@@ -14,12 +14,12 @@ const MoodList = ({ moods, deleteMood }) => {
 
   const getMoodColor = (mood) => {
     switch(mood) {
-      case 'Great': return 'bg-green-100 border-green-300';
-      case 'Good': return 'bg-blue-100 border-blue-300';
-      case 'Okay': return 'bg-yellow-100 border-yellow-300';
-      case 'Bad': return 'bg-orange-100 border-orange-300';
-      case 'Terrible': return 'bg-red-100 border-red-300';
-      default: return 'bg-gray-100 border-gray-300';
+      case 'Great': return 'bg-green-900/30 border-green-700';
+      case 'Good': return 'bg-blue-900/30 border-blue-700';
+      case 'Okay': return 'bg-yellow-900/30 border-yellow-700';
+      case 'Bad': return 'bg-orange-900/30 border-orange-700';
+      case 'Terrible': return 'bg-red-900/30 border-red-700';
+      default: return 'bg-gray-800 border-gray-700';
     }
   };
 
@@ -32,15 +32,15 @@ const MoodList = ({ moods, deleteMood }) => {
         >
           <div className="flex justify-between items-start">
             <div>
-              <h3 className="text-lg font-semibold">{mood.mood}</h3>
-              <p className="text-sm text-gray-600">
+              <h3 className="text-lg font-semibold text-white">{mood.mood}</h3>
+              <p className="text-sm text-gray-400">
                 Intensity: {mood.intensity}/10
               </p>
-              <p className="text-sm text-gray-600">{formatDate(mood.date)}</p>
+              <p className="text-sm text-gray-400">{formatDate(mood.date)}</p>
             </div>
             <button
               onClick={() => deleteMood(mood._id)}
-              className="text-red-500 hover:text-red-700"
+              className="text-red-400 hover:text-red-300"
               aria-label="Delete mood entry"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -51,12 +51,12 @@ const MoodList = ({ moods, deleteMood }) => {
           
           {mood.activities && mood.activities.length > 0 && (
             <div className="mt-2">
-              <p className="text-sm font-semibold">Activities:</p>
+              <p className="text-sm font-semibold text-gray-300">Activities:</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {mood.activities.map(activity => (
                   <span 
                     key={activity} 
-                    className="px-2 py-0.5 bg-white/50 rounded-full text-xs"
+                    className="px-2 py-0.5 bg-gray-800/50 text-gray-300 rounded-full text-xs"
                   >
                     {activity}
                   </span>
@@ -67,8 +67,8 @@ const MoodList = ({ moods, deleteMood }) => {
           
           {mood.note && (
             <div className="mt-2">
-              <p className="text-sm font-semibold">Notes:</p>
-              <p className="text-sm mt-1">{mood.note}</p>
+              <p className="text-sm font-semibold text-gray-300">Notes:</p>
+              <p className="text-sm mt-1 text-gray-300">{mood.note}</p>
             </div>
           )}
         </div>

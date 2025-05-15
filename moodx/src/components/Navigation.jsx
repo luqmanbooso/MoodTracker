@@ -6,18 +6,18 @@ const Navigation = ({ activeView, setView, openSettingsModal }) => {
   const { darkMode } = useTheme();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
-  // Theme-aware styles object
+  // Fixed dark theme styles
   const styles = {
-    logo: darkMode ? 'text-emerald-400' : 'text-orange-500',
-    logoHover: darkMode ? 'hover:text-emerald-300' : 'hover:text-orange-600',
-    navText: darkMode ? 'text-gray-300' : 'text-gray-700',
-    navTextHover: darkMode ? 'hover:text-emerald-400' : 'hover:text-orange-500',
-    navActive: darkMode ? 'text-emerald-400 border-emerald-400' : 'text-orange-500 border-orange-500',
-    navInactive: darkMode ? 'text-gray-400' : 'text-gray-600',
-    iconActive: darkMode ? 'text-emerald-400' : 'text-orange-500',
-    iconInactive: darkMode ? 'text-gray-500' : 'text-gray-500',
-    buttonBg: darkMode ? 'bg-emerald-500' : 'bg-orange-500',
-    buttonHover: darkMode ? 'hover:bg-emerald-600' : 'hover:bg-orange-600',
+    logo: 'text-emerald-400',
+    logoHover: 'hover:text-emerald-300',
+    navText: 'text-gray-300',
+    navTextHover: 'hover:text-emerald-400',
+    navActive: 'text-emerald-400 border-emerald-400',
+    navInactive: 'text-gray-400',
+    iconActive: 'text-emerald-400',
+    iconInactive: 'text-gray-500',
+    buttonBg: 'bg-emerald-500',
+    buttonHover: 'hover:bg-emerald-600',
   };
 
   // Navigation items with consistent theme coloring
@@ -43,7 +43,7 @@ const Navigation = ({ activeView, setView, openSettingsModal }) => {
   return (
     <>
       {/* Mobile nav bar */}
-      <nav className={`fixed bottom-0 w-full md:hidden z-30 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-2`}>
+      <nav className="fixed bottom-0 w-full md:hidden z-30 bg-gray-900 border-t border-gray-800 py-2">
         <div className="flex justify-around">
           {mobileNavItems.map((item) => (
             <button
@@ -65,9 +65,9 @@ const Navigation = ({ activeView, setView, openSettingsModal }) => {
       </nav>
       
       {/* Desktop sidebar navigation */}
-      <div className="hidden md:flex md:flex-col md:fixed md:h-screen md:w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
+      <div className="hidden md:flex md:flex-col md:fixed md:h-screen md:w-64 bg-gray-900 border-r border-gray-800">
         {/* Logo */}
-        <div className="p-5 border-b border-gray-200 dark:border-gray-800 flex justify-center">
+        <div className="p-5 border-b border-gray-800 flex justify-center">
           <Logo size="medium" showTagline={true} />
         </div>
         
@@ -95,7 +95,7 @@ const Navigation = ({ activeView, setView, openSettingsModal }) => {
         </nav>
         
         {/* Settings button */}
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="p-4 border-t border-gray-800">
           <button
             onClick={openSettingsModal}
             className={`w-full flex items-center px-4 py-3 rounded-lg ${styles.navText} ${styles.navTextHover} transition-all duration-200`}
@@ -110,7 +110,7 @@ const Navigation = ({ activeView, setView, openSettingsModal }) => {
       </div>
       
       {/* Mobile top bar */}
-      <div className="fixed top-0 left-0 right-0 md:hidden z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
+      <div className="fixed top-0 left-0 right-0 md:hidden z-30 bg-gray-900 border-b border-gray-800">
         <div className="flex justify-between items-center px-4 py-3">
           <Logo size="small" showTagline={false} />
           <button

@@ -87,42 +87,42 @@ const MoodAchievements = ({ moods }) => {
 
   if (!achievements) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-md text-center">
-        <h3 className="text-lg font-semibold mb-3">Achievements</h3>
-        <p className="text-gray-500">Log your first mood to start earning achievements!</p>
+      <div className="bg-gray-900 p-6 rounded-lg shadow-md text-center border border-gray-800">
+        <h3 className="text-lg font-semibold mb-3 text-white">Achievements</h3>
+        <p className="text-gray-400">Log your first mood to start earning achievements!</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-4">Your Achievements</h3>
+    <div className="bg-gray-900 p-6 rounded-lg shadow-md border border-gray-800">
+      <h3 className="text-lg font-semibold mb-4 text-white">Your Achievements</h3>
       
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-blue-50 p-4 rounded-lg text-center">
-          <p className="text-sm text-blue-600 mb-1">Current Streak</p>
-          <p className="text-3xl font-bold text-blue-700">{achievements.currentStreak} {achievements.currentStreak === 1 ? 'day' : 'days'}</p>
+        <div className="bg-blue-900/30 p-4 rounded-lg text-center border border-blue-800/50">
+          <p className="text-sm text-blue-300 mb-1">Current Streak</p>
+          <p className="text-3xl font-bold text-blue-300">{achievements.currentStreak} {achievements.currentStreak === 1 ? 'day' : 'days'}</p>
         </div>
-        <div className="bg-purple-50 p-4 rounded-lg text-center">
-          <p className="text-sm text-purple-600 mb-1">Total Entries</p>
-          <p className="text-3xl font-bold text-purple-700">{achievements.totalEntries}</p>
+        <div className="bg-purple-900/30 p-4 rounded-lg text-center border border-purple-800/50">
+          <p className="text-sm text-purple-300 mb-1">Total Entries</p>
+          <p className="text-3xl font-bold text-purple-300">{achievements.totalEntries}</p>
         </div>
       </div>
       
       {achievements.badges.length > 0 ? (
         <div>
-          <h4 className="text-md font-medium mb-3">Badges Earned ({achievements.badges.length})</h4>
+          <h4 className="text-md font-medium mb-3 text-white">Badges Earned ({achievements.badges.length})</h4>
           <div className="grid grid-cols-2 gap-3">
             {achievements.badges.map((badge, index) => (
-              <div key={index} className="border border-gray-200 rounded-lg p-3 flex items-center">
-                <div className="bg-yellow-100 text-yellow-700 rounded-full p-2 mr-3">
+              <div key={index} className="border border-gray-700 rounded-lg p-3 flex items-center bg-gray-800">
+                <div className="bg-yellow-900/30 text-yellow-300 rounded-full p-2 mr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                 </div>
                 <div>
-                  <p className="font-medium">{badge.name}</p>
-                  <p className="text-xs text-gray-500">{badge.description}</p>
+                  <p className="font-medium text-white">{badge.name}</p>
+                  <p className="text-xs text-gray-400">{badge.description}</p>
                 </div>
               </div>
             ))}
@@ -130,12 +130,12 @@ const MoodAchievements = ({ moods }) => {
         </div>
       ) : (
         <div className="text-center py-3">
-          <p className="text-gray-500">Keep tracking your moods to earn badges!</p>
+          <p className="text-gray-400">Keep tracking your moods to earn badges!</p>
         </div>
       )}
       
       {achievements.currentStreak > 0 && (
-        <div className="mt-4 text-center text-sm text-gray-600">
+        <div className="mt-4 text-center text-sm text-gray-400">
           <p>Come back tomorrow to continue your streak!</p>
         </div>
       )}

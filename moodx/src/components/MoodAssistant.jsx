@@ -11,7 +11,7 @@ const MoodAssistant = ({
   expanded = false,
   fullPage = false
 }) => {
-  const { theme, darkMode } = useTheme();
+  // Remove theme conditionals
   const [messages, setMessages] = useState([
     { 
       id: 1, 
@@ -28,15 +28,16 @@ const MoodAssistant = ({
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // Fixed styling for dark theme
   const styles = {
-    primaryColor: darkMode ? 'emerald' : 'orange',
-    assistantBg: darkMode ? 'bg-gray-800' : 'bg-white',
-    assistantBorder: darkMode ? 'border-gray-700' : 'border-gray-200',
-    messageUser: darkMode ? 'bg-emerald-500/20 text-white' : 'bg-orange-500/10 text-gray-800',
-    messageBot: darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800',
-    inputBg: darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800',
-    headerText: darkMode ? 'text-white' : 'text-gray-800',
-    buttonPrimary: darkMode ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-orange-500 hover:bg-orange-600',
+    primaryColor: 'emerald',
+    assistantBg: 'bg-gray-800',
+    assistantBorder: 'border-gray-700',
+    messageUser: 'bg-emerald-500/20 text-white',
+    messageBot: 'bg-gray-700 text-white',
+    inputBg: 'bg-gray-700 text-white',
+    headerText: 'text-white',
+    buttonPrimary: 'bg-emerald-500 hover:bg-emerald-600',
   };
 
   useEffect(() => {
@@ -319,7 +320,7 @@ const MoodAssistant = ({
       ${styles.assistantBg} ${styles.assistantBorder} rounded-lg shadow-xl overflow-hidden transition-all duration-300 flex flex-col
     `}>
       {/* Header */}
-      <div className={`bg-${styles.primaryColor}-700 ${styles.headerText} p-4 flex justify-between items-center`}>
+      <div className="bg-emerald-700 text-white p-4 flex justify-between items-center">
         <div className="flex items-center">
           <div className="bg-white rounded-full p-1 mr-2">
             <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-${styles.primaryColor}-700`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -370,7 +371,7 @@ const MoodAssistant = ({
                 message.type === 'user' 
                   ? styles.messageUser
                   : message.isError 
-                    ? 'bg-red-100 text-red-800'
+                    ? 'bg-red-900/30 text-red-300'
                     : styles.messageBot
               }`}
             >
@@ -404,20 +405,20 @@ const MoodAssistant = ({
       </div>
       
       {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200">
+      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-700">
         <div className="flex items-center">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Talk to your coach..."
-            className={`flex-1 p-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${styles.inputBg}`}
+            className="flex-1 p-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-700 text-white border-gray-600"
             ref={inputRef}
           />
           <button
             type="submit"
             disabled={!input.trim() || isTyping}
-            className={`p-2 ${styles.buttonPrimary} text-white rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed`}
+            className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
@@ -426,7 +427,7 @@ const MoodAssistant = ({
         </div>
       </form>
       {error && (
-        <div className="mx-4 my-2 p-2 bg-red-100 text-red-700 rounded text-sm">
+        <div className="mx-4 my-2 p-2 bg-red-900/30 text-red-300 rounded text-sm">
           {error}
         </div>
       )}
