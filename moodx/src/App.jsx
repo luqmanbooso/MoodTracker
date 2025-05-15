@@ -51,7 +51,6 @@ function AppWithTheme() {
 
 // Main App content
 function AppContent() {
-  const { darkMode } = useTheme();
   const [moods, setMoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -88,13 +87,13 @@ function AppContent() {
 
   // Update the theme object to handle colors consistently across all views
   const theme = {
-    primaryColor: darkMode ? 'emerald' : 'orange',
-    cardBg: darkMode ? 'bg-gray-800' : 'bg-white',
-    textColor: darkMode ? 'text-white' : 'text-gray-800',
-    secondaryText: darkMode ? 'text-gray-300' : 'text-gray-600',
-    borderColor: darkMode ? 'border-gray-700' : 'border-gray-200',
-    buttonBg: darkMode ? 'bg-emerald-500' : 'bg-orange-500',
-    buttonHover: darkMode ? 'hover:bg-emerald-600' : 'hover:bg-orange-600',
+    primaryColor: 'emerald',
+    cardBg: 'bg-gray-800',
+    textColor: 'text-white',
+    secondaryText: 'text-gray-300',
+    borderColor: 'border-gray-700',
+    buttonBg: 'bg-emerald-500',
+    buttonHover: 'hover:bg-emerald-600',
   };
 
   // Fetch moods on component mount
@@ -381,7 +380,7 @@ function AppContent() {
   } : null;
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-800'}`}>
+    <div className="min-h-screen bg-gray-900 text-white">
       <Navigation 
         activeView={view} 
         setView={setView}
@@ -393,9 +392,9 @@ function AppContent() {
       <div className="md:ml-64 pt-16 md:pt-0">
         <div className="pt-16 md:pt-4 px-4 md:px-6 lg:px-8 pb-20">
           {/* Top Bar with Points Display */}
-          <div className="sticky top-0 z-20 bg-gray-50 dark:bg-gray-900 py-3 mb-6">
+          <div className="sticky top-0 z-20 bg-gray-900 py-3 mb-6">
             <div className="flex justify-between items-center">
-              <h1 className={`text-2xl font-bold text-gray-800 dark:text-gray-100`}>
+              <h1 className="text-2xl font-bold text-white">
                 {view.charAt(0).toUpperCase() + view.slice(1)}
               </h1>
               <div className="flex items-center gap-4">
@@ -414,7 +413,7 @@ function AppContent() {
           
           {/* Error message display */}
           {error && (
-            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded mb-6 shadow-md">
+            <div className="bg-red-900/30 border-l-4 border-red-500 text-red-300 p-4 rounded mb-6 shadow-md">
               <div className="flex items-center">
                 <svg className="h-6 w-6 mr-3 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -428,23 +427,23 @@ function AppContent() {
           {view === 'dashboard' && (
   <>
     {/* Top Hero Section with Quote Carousel */}
-    <div className={`mb-6 rounded-xl ${darkMode ? 'bg-gradient-to-r from-gray-800 to-gray-900' : 'bg-gradient-to-r from-white to-gray-50'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'} shadow-lg overflow-hidden`}>
+    <div className="mb-6 rounded-xl bg-gradient-to-r from-gray-800 to-gray-900 border border-gray-700 shadow-lg overflow-hidden">
       <div className="relative">
         {/* Background Pattern */}
         <div className="absolute top-0 right-0 opacity-10">
           <svg width="300" height="300" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="50" cy="50" r="40" fill={darkMode ? '#4ade80' : '#f97316'} />
-            <path d="M50,10 A40,40 0 0,1 50,90 A40,40 0 0,1 50,10" fill="none" stroke={darkMode ? '#34d399' : '#fb923c'} strokeWidth="8" />
+            <circle cx="50" cy="50" r="40" fill="#4ade80" />
+            <path d="M50,10 A40,40 0 0,1 50,90 A40,40 0 0,1 50,10" fill="none" stroke="#34d399" strokeWidth="8" />
           </svg>
         </div>
         
         <div className="p-6 md:p-8">
           <div className="flex flex-col md:flex-row justify-between">
             <div className="md:w-3/5 mb-6 md:mb-0">
-              <h1 className={`text-3xl md:text-4xl font-bold mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white">
                 Are You Ready to Share Your Mind?
               </h1>
-              <p className={`text-lg mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <p className="text-lg mb-4 text-gray-300">
                 Track your emotions, discover patterns, and grow with every check-in.
               </p>
               
@@ -460,11 +459,11 @@ function AppContent() {
                 </button>
                 
                 {streak > 0 && (
-                  <div className={`px-4 py-2.5 ${darkMode ? 'bg-gray-700/70' : 'bg-white'} rounded-lg flex items-center shadow-sm`}>
+                  <div className="px-4 py-2.5 bg-gray-700/70 rounded-lg flex items-center shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
                     </svg>
-                    <span className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    <span className="font-medium text-white">
                       {streak} Day Streak! 🔥
                     </span>
                   </div>
@@ -473,14 +472,14 @@ function AppContent() {
             </div>
             
             {/* Daily Quote Carousel */}
-            <div className={`md:w-2/5 p-5 rounded-lg ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-sm border ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex flex-col justify-center relative overflow-hidden`}>
+            <div className="md:w-2/5 p-5 rounded-lg bg-gray-800/50 shadow-sm border border-gray-700 flex flex-col justify-center relative overflow-hidden">
               <div className="absolute -top-2 -right-2">
-                <svg className="w-12 h-12 text-gray-300 dark:text-gray-700 opacity-50" fill="currentColor" viewBox="0 0 32 32">
+                <svg className="w-12 h-12 text-gray-700 opacity-50" fill="currentColor" viewBox="0 0 32 32">
                   <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
                 </svg>
               </div>
               
-              <span className={`text-sm uppercase font-semibold mb-1 ${darkMode ? 'text-emerald-400' : 'text-orange-500'}`}>Daily Inspiration</span>
+              <span className="text-sm uppercase font-semibold mb-1 text-emerald-400">Daily Inspiration</span>
               <div className="animate-fade-in">
                 <DailyQuote compact={true} />
               </div>
@@ -491,8 +490,8 @@ function AppContent() {
     </div>
 
     {/* Quick Mood Check-in */}
-    <div className={`mb-6 p-6 rounded-xl ${theme.cardBg} border ${theme.borderColor} shadow-md`}>
-      <h2 className={`text-xl font-bold mb-4 ${theme.textColor}`}>
+    <div className="mb-6 p-6 rounded-xl bg-gray-800 border border-gray-700 shadow-md">
+      <h2 className="text-xl font-bold mb-4 text-white">
         How are you feeling right now?
       </h2>
       <div className="grid grid-cols-5 gap-3">
@@ -513,20 +512,16 @@ function AppContent() {
               activities: [],
               tags: []
             })}
-            className={`p-4 rounded-lg flex flex-col items-center justify-center transition-all border ${
-              darkMode 
-                ? `border-gray-700 hover:bg-${item.color}-900/20 hover:border-${item.color}-700/50` 
-                : `border-gray-200 hover:bg-${item.color}-50 hover:border-${item.color}-200`
-            }`}
+            className={`p-4 rounded-lg flex flex-col items-center justify-center transition-all border border-gray-700 hover:bg-${item.color}-900/20 hover:border-${item.color}-700/50`}
           >
             <span className="text-3xl mb-2">{item.emoji}</span>
-            <span className={`text-sm font-medium ${theme.secondaryText}`}>{item.mood}</span>
+            <span className="text-sm font-medium text-gray-300">{item.mood}</span>
           </button>
         ))}
       </div>
       <button
         onClick={() => setShowMoodForm(true)}
-        className={`mt-4 w-full py-2 text-${theme.primaryColor}-600 hover:bg-${theme.primaryColor}-50 dark:hover:bg-${theme.primaryColor}-900/10 rounded-lg text-center text-sm font-medium`}
+        className={`mt-4 w-full py-2 text-emerald-400 hover:bg-emerald-900/10 rounded-lg text-center text-sm font-medium`}
       >
         Need more options? Log detailed mood
       </button>
@@ -534,7 +529,7 @@ function AppContent() {
 
     {/* What We Offer Section */}
     <div className="mb-6">
-      <h2 className={`text-xl font-bold mb-4 ${theme.textColor}`}>
+      <h2 className="text-xl font-bold mb-4 text-white">
         What MoodX Offers You
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -543,41 +538,41 @@ function AppContent() {
             title: "Mood Tracking",
             description: "Record and visualize your emotional patterns over time",
             icon: "M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z",
-            color: darkMode ? "emerald" : "orange"
+            color: "emerald"
           },
           {
             title: "Insights & Analysis",
             description: "Understand what affects your mental wellbeing",
             icon: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
-            color: darkMode ? "teal" : "amber"
+            color: "teal"
           },
           {
             title: "Goal Tracking",
             description: "Set wellness goals and track your progress",
-            icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01",
-            color: darkMode ? "cyan" : "rose"
+            icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2",
+            color: "cyan"
           },
           {
             title: "Mindset Coach",
             description: "Get personalized tips and mental wellness guidance",
             icon: "M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
-            color: darkMode ? "blue" : "indigo"
+            color: "blue"
           },
         ].map((feature, i) => (
           <div 
             key={i} 
-            className={`p-5 rounded-xl ${theme.cardBg} border ${theme.borderColor} hover:shadow-md transition-shadow`}
+            className="p-5 rounded-xl bg-gray-800 border border-gray-700 hover:shadow-md transition-shadow"
           >
-            <div className={`w-12 h-12 flex items-center justify-center rounded-full mb-4 bg-${feature.color}-100 dark:bg-${feature.color}-900/20`}>
+            <div className={`w-12 h-12 flex items-center justify-center rounded-full mb-4 bg-${feature.color}-900/20`}>
               <svg xmlns="http://www.w3.org/2000/svg" 
-                className={`h-6 w-6 text-${feature.color}-600 dark:text-${feature.color}-400`} 
+                className={`h-6 w-6 text-${feature.color}-400`} 
                 fill="none" viewBox="0 0 24 24" stroke="currentColor"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={feature.icon} />
               </svg>
             </div>
-            <h3 className={`font-bold text-lg mb-1 ${theme.textColor}`}>{feature.title}</h3>
-            <p className={`${theme.secondaryText}`}>{feature.description}</p>
+            <h3 className="font-bold text-lg mb-1 text-white">{feature.title}</h3>
+            <p className="text-gray-300">{feature.description}</p>
           </div>
         ))}
       </div>
@@ -588,14 +583,14 @@ function AppContent() {
       {/* Main chart/stats area */}
       <div className="lg:col-span-2 space-y-6">
         {moods.length > 0 ? (
-          <div className={`rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border overflow-hidden`}>
-            <div className="p-5 border-b ${theme.borderColor} flex justify-between items-center">
-              <h2 className={`text-xl font-bold ${theme.textColor}`}>
+          <div className="rounded-xl shadow-md bg-gray-800 border-gray-700 border overflow-hidden">
+            <div className="p-5 border-b border-gray-700 flex justify-between items-center">
+              <h2 className="text-xl font-bold text-white">
                 Your Mood Journey
               </h2>
               <button 
                 onClick={() => setView('insights')}
-                className={`text-sm text-${theme.primaryColor}-600 hover:text-${theme.primaryColor}-800 dark:text-${theme.primaryColor}-400 dark:hover:text-${theme.primaryColor}-300`}
+                className="text-sm text-emerald-600 hover:text-emerald-800"
               >
                 View Insights
               </button>
@@ -605,22 +600,22 @@ function AppContent() {
             </div>
           </div>
         ) : (
-          <div className={`p-6 rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border text-center`}>
+          <div className="p-6 rounded-xl shadow-md bg-gray-800 border-gray-700 border text-center">
             <div className="py-8">
-              <div className="mb-6 inline-flex p-4 rounded-full bg-gray-100 dark:bg-gray-700">
+              <div className="mb-6 inline-flex p-4 rounded-full bg-gray-700">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className={`text-2xl font-medium mb-3 ${theme.textColor}`}>
+              <h3 className="text-2xl font-medium mb-3 text-white">
                 Start Your Mood Journey
               </h3>
-              <p className={`${theme.secondaryText} max-w-md mx-auto mb-6`}>
+              <p className="text-gray-300 max-w-md mx-auto mb-6">
                 Track your moods regularly to see patterns and get personalized insights about your emotional wellbeing.
               </p>
               <button
                 onClick={() => setShowMoodForm(true)}
-                className={`px-6 py-3 ${theme.buttonBg} ${theme.buttonHover} text-white rounded-lg transition-colors inline-flex items-center font-medium text-lg`}
+                className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors inline-flex items-center font-medium text-lg"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -632,8 +627,8 @@ function AppContent() {
         )}
 
         {/* Daily Challenge */}
-        <div className={`p-6 rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border`}>
-          <h2 className={`text-xl font-bold mb-4 ${theme.textColor} flex items-center`}>
+        <div className="p-6 rounded-xl shadow-md bg-gray-800 border-gray-700 border">
+          <h2 className="text-xl font-bold mb-4 text-white flex items-center">
             <span className="mr-2">🎯</span> Today's Wellness Challenge
           </h2>
           <DailyChallenge 
@@ -646,39 +641,39 @@ function AppContent() {
       {/* Right sidebar for progress and achievements */}
       <div className="lg:col-span-1 space-y-6">
         {/* User Level & Progress */}
-        <div className={`p-6 rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border`}>
+        <div className="p-6 rounded-xl shadow-md bg-gray-800 border-gray-700 border">
           <div className="flex items-center justify-between mb-3">
-            <h2 className={`text-lg font-bold ${theme.textColor}`}>
+            <h2 className="text-lg font-bold text-white">
               Your Progress
             </h2>
-            <span className={`px-3 py-1 text-sm font-bold rounded-full ${darkMode ? 'bg-emerald-900/30 text-emerald-400' : 'bg-orange-100 text-orange-600'}`}>
+            <span className="px-3 py-1 text-sm font-bold rounded-full bg-emerald-900/30 text-emerald-400">
               Level {pointsSystem.levelNumber || 1}
             </span>
           </div>
           
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-1">
-              <span className={theme.secondaryText}>XP Progress</span>
+              <span className="text-gray-300">XP Progress</span>
               <span className="font-medium">{pointsSystem.points}/{pointsSystem.nextLevel} points</span>
             </div>
-            <div className="h-2.5 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-2.5 w-full bg-gray-700 rounded-full overflow-hidden">
               <div 
-                className={`h-full bg-${theme.primaryColor}-500 transition-all duration-500`}
+                className="h-full bg-emerald-500 transition-all duration-500"
                 style={{ width: `${Math.round(pointsSystem.progress * 100)}%` }}
               ></div>
             </div>
           </div>
           
           <div className="grid grid-cols-3 gap-2 mb-4">
-            <div className={`p-3 text-center rounded ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <div className="p-3 text-center rounded bg-gray-700">
               <div className="text-xl font-bold">{moods.length}</div>
               <div className="text-xs uppercase mt-1 text-gray-500">Entries</div>
             </div>
-            <div className={`p-3 text-center rounded ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <div className="p-3 text-center rounded bg-gray-700">
               <div className="text-xl font-bold">{streak}</div>
               <div className="text-xs uppercase mt-1 text-gray-500">Streak</div>
             </div>
-            <div className={`p-3 text-center rounded ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+            <div className="p-3 text-center rounded bg-gray-700">
               <div className="text-xl font-bold">{pointsSystem.points}</div>
               <div className="text-xs uppercase mt-1 text-gray-500">Points</div>
             </div>
@@ -686,17 +681,15 @@ function AppContent() {
           
           <button
             onClick={() => setView('progress')}
-            className={`w-full py-2 rounded-lg text-center border ${darkMode 
-              ? 'border-gray-700 hover:bg-gray-700 text-white' 
-              : 'border-gray-200 hover:bg-gray-50 text-gray-800'}`}
+            className="w-full py-2 rounded-lg text-center border border-gray-700 hover:bg-gray-700 text-white"
           >
             View All Progress
           </button>
         </div>
         
         {/* Getting Started Tips */}
-        <div className={`p-6 rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border`}>
-          <h2 className={`text-lg font-bold mb-3 ${theme.textColor}`}>
+        <div className="p-6 rounded-xl shadow-md bg-gray-800 border-gray-700 border">
+          <h2 className="text-lg font-bold mb-3 text-white">
             Getting Started
           </h2>
           <ul className="space-y-3">
@@ -709,8 +702,8 @@ function AppContent() {
               <li key={i} className="flex items-start">
                 <div className={`mt-0.5 flex-shrink-0 h-5 w-5 flex items-center justify-center rounded-full border ${
                   step.complete 
-                    ? `bg-${theme.primaryColor}-500 border-${theme.primaryColor}-600` 
-                    : 'border-gray-300 dark:border-gray-600'
+                    ? `bg-emerald-500 border-emerald-600` 
+                    : 'border-gray-600'
                 }`}>
                   {step.complete && (
                     <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -718,7 +711,7 @@ function AppContent() {
                     </svg>
                   )}
                 </div>
-                <span className={`ml-2 ${step.complete ? 'line-through opacity-70' : ''} ${theme.secondaryText}`}>
+                <span className={`ml-2 ${step.complete ? 'line-through opacity-70' : ''} text-gray-300`}>
                   {step.text}
                 </span>
               </li>
@@ -727,19 +720,19 @@ function AppContent() {
         </div>
         
         {moods.length > 0 && (
-          <div className={`rounded-xl shadow-md ${theme.cardBg} ${theme.borderColor} border overflow-hidden`}>
-            <div className="p-4 border-b ${theme.borderColor}">
-              <h2 className={`font-bold ${theme.textColor} flex items-center`}>
+          <div className="rounded-xl shadow-md bg-gray-800 border-gray-700 border overflow-hidden">
+            <div className="p-4 border-b border-gray-700">
+              <h2 className="font-bold text-white flex items-center">
                 <span className="mr-2">📝</span> Recent Entries
               </h2>
             </div>
             <div>
               <MoodList moods={moods.slice(0, 3)} deleteMood={handleDeleteMood} compact={true} />
               {moods.length > 3 && (
-                <div className="px-4 py-2 border-t ${theme.borderColor}">
+                <div className="px-4 py-2 border-t border-gray-700">
                   <button 
                     onClick={() => setView('log')}
-                    className={`w-full text-center text-sm text-${theme.primaryColor}-600 hover:text-${theme.primaryColor}-700 dark:text-${theme.primaryColor}-400`}
+                    className="w-full text-center text-sm text-emerald-600 hover:text-emerald-700"
                   >
                     View all entries →
                   </button>
@@ -755,15 +748,15 @@ function AppContent() {
           
           {view === 'log' && (
             <div className="animate-fade-in">
-              <div className={`mb-6 p-6 rounded-xl bg-gradient-to-r from-${theme.primaryColor}-600 via-${theme.primaryColor}-500 to-${theme.primaryColor}-700 text-white shadow-xl`}>
+              <div className="mb-6 p-6 rounded-xl bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-700 text-white shadow-xl">
                 <h1 className="text-3xl font-bold mb-2">How Are You Feeling Today?</h1>
                 <p className="opacity-90">Track your emotions to build self-awareness and identify patterns.</p>
               </div>
               
               <div className="grid md:grid-cols-2 gap-6">
-                <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor}`}>
-                  <div className="p-5 border-b ${theme.borderColor}">
-                    <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
+                <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+                  <div className="p-5 border-b border-gray-700">
+                    <h2 className="text-xl font-bold text-white flex items-center">
                       <span className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-2 rounded-lg mr-2">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -777,15 +770,18 @@ function AppContent() {
                       addMood={handleAddMood} 
                       isLoading={loading} 
                       customMoodCategories={customMoodCategories}
+                      moods={moods}
+                      habits={habits}
+                      goals={goals}
                     />
                   </div>
                 </div>
                 
                 <div className="space-y-6">
                   {moods.length > 0 && (
-                    <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor}`}>
-                      <div className="p-5 border-b ${theme.borderColor}">
-                        <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
+                    <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+                      <div className="p-5 border-b border-gray-700">
+                        <h2 className="text-xl font-bold text-white flex items-center">
                           <span className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-2 rounded-lg mr-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -800,9 +796,9 @@ function AppContent() {
                     </div>
                   )}
                   
-                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor}`}>
-                    <div className="p-5 border-b ${theme.borderColor}">
-                      <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
+                  <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+                    <div className="p-5 border-b border-gray-700">
+                      <h2 className="text-xl font-bold text-white flex items-center">
                         <span className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white p-2 rounded-lg mr-2">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -814,14 +810,14 @@ function AppContent() {
                     <div className="p-6">
                       {loading ? (
                         <div className="flex justify-center items-center h-40">
-                          <div className={`animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-${theme.primaryColor}-500`}></div>
+                          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-emerald-500"></div>
                         </div>
                       ) : moods.length === 0 ? (
-                        <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg text-center">
+                        <div className="bg-gray-800 p-6 rounded-lg text-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                           </svg>
-                          <p className="text-gray-600 dark:text-gray-400">No mood entries yet. Add your first mood!</p>
+                          <p className="text-gray-400">No mood entries yet. Add your first mood!</p>
                         </div>
                       ) : (
                         <div className="max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
@@ -835,9 +831,9 @@ function AppContent() {
               
               {moods.length > 0 && (
                 <div className="mt-6">
-                  <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor}`}>
-                    <div className="p-5 border-b ${theme.borderColor}">
-                      <h2 className={`text-xl font-bold ${theme.textColor} flex items-center`}>
+                  <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+                    <div className="p-5 border-b border-gray-700">
+                      <h2 className="text-xl font-bold text-white flex items-center">
                         <span className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white p-2 rounded-lg mr-2">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -871,8 +867,8 @@ function AppContent() {
           {view === 'insights' && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2">
-                <div className={`${theme.cardBg} rounded-xl shadow-lg overflow-hidden border ${theme.borderColor} p-6`}>
-                  <h2 className={`text-xl font-bold mb-4 ${theme.textColor}`}>
+                <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700 p-6">
+                  <h2 className="text-xl font-bold mb-4 text-white">
                     Mood Trends
                   </h2>
                   <MoodChart moods={moods} />
@@ -903,13 +899,13 @@ function AppContent() {
           {/* Modal for logging mood */}
           {showMoodForm && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
                 <div className="p-6">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold">How are you feeling?</h2>
                     <button 
                       onClick={() => setShowMoodForm(false)}
-                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                      className="text-gray-400 hover:text-gray-200"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -924,6 +920,9 @@ function AppContent() {
                     }}
                     isLoading={loading}
                     customMoodCategories={customMoodCategories}
+                    moods={moods}
+                    habits={habits}
+                    goals={goals}
                   />
                 </div>
               </div>

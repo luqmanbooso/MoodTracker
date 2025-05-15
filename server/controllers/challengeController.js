@@ -3,6 +3,7 @@ import UserChallenge from '../models/UserChallenge.js';
 import Achievement from '../models/Achievement.js';
 import Progress from '../models/Progress.js';
 import mongoose from 'mongoose';
+import { ObjectId } from 'mongodb';
 
 // Sample challenges to populate DB if needed
 const sampleChallenges = [
@@ -140,8 +141,6 @@ export const getChallengeHistory = async (req, res) => {
   }
 };
 
-
-
 // Get all available challenges
 export const getChallenges = async (req, res) => {
   try {
@@ -176,35 +175,53 @@ export const getChallenges = async (req, res) => {
 // Get user's challenges
 export const getUserChallenges = async (req, res) => {
   try {
-    console.log("Fetching user challenges...");
+    console.log('Fetching user challenges...');
     
-    // Check if UserChallenge model is available
-    if (!UserChallenge) {
-      console.error('UserChallenge model is undefined');
-      return res.status(500).json({ message: 'UserChallenge model not defined' });
+    // Fix: Get the user ID safely with proper null checks
+    let userId;
+    
+    if (req.user && req.user.id) {
+      userId = req.user.id;
+    } else if (req.params && req.params.userId) {
+      userId = req.params.userId;
+    } else if (req.body && req.body.userId) {
+      userId = req.body.userId;
+    } else {
+      // If no userId is provided anywhere, use a default for testing
+      userId = '000000000000000000000000';
+      console.log('No user ID provided, using default ID');
     }
     
-    // Use a fallback ID - the issue might be that this ID doesn't exist
-    // For testing, we'll return an empty array instead of an error
-    const userId = req.user?.id || '6453e23e1f1d93b020ccae';
-    console.log(`Using user ID: ${userId}`);
+    console.log('Using user ID:', userId);
+    
+    // Validate the user ID format before querying
+    let userObjectId;
     
     try {
-      const userChallenges = await UserChallenge.find({ user: userId })
-        .populate('challenge')
-        .sort({ startedAt: -1 });
-      
-      console.log(`Found ${userChallenges ? userChallenges.length : 0} user challenges`);
-      res.status(200).json(userChallenges || []);
-    } catch (findErr) {
-      console.error('Error in UserChallenge.find:', findErr);
-      // Return empty array instead of error for better UX
-      res.status(200).json([]);
+      // Check if the ID is a valid MongoDB ObjectId
+      if (mongoose.Types.ObjectId.isValid(userId)) {
+        userObjectId = new mongoose.Types.ObjectId(userId);
+      } else {
+        // If it's not valid, generate a consistent dummy ObjectId for testing
+        console.log(`Invalid ObjectId format. Using fallback ID.`);
+        userObjectId = new mongoose.Types.ObjectId('000000000000000000000000');
+      }
+    } catch (idError) {
+      console.error('Error converting user ID to ObjectId:', idError);
+      userObjectId = new mongoose.Types.ObjectId('000000000000000000000000');
     }
-  } catch (err) {
-    console.error('Error getting user challenges:', err);
-    // Return empty array with 200 status instead of error
-    res.status(200).json([]);
+    
+    // Fetch challenges with the properly formatted ObjectId
+    const userChallenges = await UserChallenge.find({ user: userObjectId })
+      .populate('challenge')
+      .sort({ updatedAt: -1 });
+      
+    console.log(`Found ${userChallenges.length} user challenges`);
+    
+    return res.status(200).json(userChallenges);
+  } catch (error) {
+    console.error('Error in getUserChallenges:', error);
+    return res.status(500).json({ error: error.message });
   }
 };
 
@@ -265,11 +282,28 @@ export const updateChallengeProgress = async (req, res) => {
   try {
     const { challengeId } = req.params;
     const { progress } = req.body;
-    const userId = req.user?.id || '6453e23e1f1d93b020ccae';  // Provide a default ID for testing
+    
+    // Get userId with proper null checks
+    let userId;
+    if (req.user && req.user.id) {
+      userId = req.user.id;
+    } else if (req.body && req.body.userId) {
+      userId = req.body.userId;
+    } else {
+      userId = '000000000000000000000000';
+    }
+    
+    // Validate ObjectId
+    let userObjectId;
+    if (mongoose.Types.ObjectId.isValid(userId)) {
+      userObjectId = new mongoose.Types.ObjectId(userId);
+    } else {
+      userObjectId = new mongoose.Types.ObjectId('000000000000000000000000');
+    }
     
     // Find user challenge
     const userChallenge = await UserChallenge.findOne({
-      user: userId,
+      user: userObjectId,
       challenge: challengeId,
       completed: false
     }).populate('challenge');

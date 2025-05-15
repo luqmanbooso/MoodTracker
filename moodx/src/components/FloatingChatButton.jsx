@@ -64,11 +64,11 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button - using emerald colors */}
       {!isOpen && (
         <button
           onClick={handleOpenChat}
-          className="fixed bottom-6 right-6 bg-orange-500 hover:bg-orange-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg z-50 transition-all"
+          className="fixed bottom-6 right-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg z-50 transition-all"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -76,21 +76,21 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
         </button>
       )}
 
-      {/* Chat Modal */}
+      {/* Chat Modal - dark themed */}
       {isOpen && (
-        <div className={`fixed ${minimized ? 'bottom-6 right-6 w-72' : 'bottom-0 right-0 md:bottom-6 md:right-6 w-full md:w-96'} bg-white rounded-lg shadow-xl z-50 transition-all duration-300 overflow-hidden max-h-[600px]`}>
+        <div className={`fixed ${minimized ? 'bottom-6 right-6 w-72' : 'bottom-0 right-0 md:bottom-6 md:right-6 w-full md:w-96'} bg-gray-800 rounded-lg shadow-xl z-50 transition-all duration-300 overflow-hidden max-h-[600px]`}>
           {/* Chat header */}
-          <div className="bg-orange-500 text-white px-4 py-3 flex justify-between items-center">
+          <div className="bg-emerald-600 text-white px-4 py-3 flex justify-between items-center">
             {!minimized && (
               <>
                 <h3 className="font-medium">Mindset Coach</h3>
                 <div className="flex space-x-2">
-                  <button onClick={handleMinimize} className="hover:bg-orange-600 rounded p-1">
+                  <button onClick={handleMinimize} className="hover:bg-emerald-700 rounded p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                   </button>
-                  <button onClick={handleCloseChat} className="hover:bg-orange-600 rounded p-1">
+                  <button onClick={handleCloseChat} className="hover:bg-emerald-700 rounded p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -102,12 +102,12 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
               <>
                 <h3 className="font-medium">Mindset Coach</h3>
                 <div className="flex space-x-2">
-                  <button onClick={handleMinimize} className="hover:bg-orange-600 rounded p-1">
+                  <button onClick={handleMinimize} className="hover:bg-emerald-700 rounded p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                     </svg>
                   </button>
-                  <button onClick={handleCloseChat} className="hover:bg-orange-600 rounded p-1">
+                  <button onClick={handleCloseChat} className="hover:bg-emerald-700 rounded p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -120,14 +120,14 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
           {!minimized && (
             <>
               {/* Chat messages */}
-              <div className="p-4 h-96 overflow-y-auto space-y-4 bg-gray-50">
+              <div className="p-4 h-96 overflow-y-auto space-y-4 bg-gray-900">
                 {chatHistory.map((chat, index) => (
                   <div key={index} className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div 
                       className={`max-w-xs md:max-w-md px-4 py-2 rounded-lg ${
                         chat.role === 'user' 
-                          ? 'bg-orange-100 text-gray-800' 
-                          : 'bg-white border border-gray-200 text-gray-700'
+                          ? 'bg-emerald-900/50 text-white' 
+                          : 'bg-gray-800 border border-gray-700 text-gray-300'
                       }`}
                     >
                       {chat.content}
@@ -136,7 +136,7 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
                       {chat.role === 'assistant' && chat.action && (
                         <div className="mt-2">
                           <button
-                            className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                            className="text-sm text-emerald-400 hover:text-emerald-300 font-medium"
                             onClick={() => alert(`Would navigate to ${chat.action} section`)}
                           >
                             Go to {chat.action.charAt(0).toUpperCase() + chat.action.slice(1)} →
@@ -146,13 +146,14 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
                     </div>
                   </div>
                 ))}
+                
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="bg-white border border-gray-200 px-4 py-2 rounded-lg text-gray-500">
+                    <div className="bg-gray-800 border border-gray-700 px-4 py-2 rounded-lg text-gray-400">
                       <div className="flex space-x-2 items-center">
-                        <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse"></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse delay-75"></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-300 animate-pulse delay-150"></div>
+                        <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse"></div>
+                        <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse delay-75"></div>
+                        <div className="w-2 h-2 rounded-full bg-gray-500 animate-pulse delay-150"></div>
                       </div>
                     </div>
                   </div>
@@ -160,19 +161,19 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
               </div>
 
               {/* Chat input */}
-              <form onSubmit={handleSubmit} className="border-t border-gray-200 p-3">
+              <form onSubmit={handleSubmit} className="border-t border-gray-700 p-3">
                 <div className="flex space-x-2">
                   <input
                     type="text"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Type your message..."
-                    className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    className="flex-1 border border-gray-600 bg-gray-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     disabled={isLoading}
                   />
                   <button
                     type="submit"
-                    className="bg-orange-500 hover:bg-orange-600 text-white rounded-lg px-4 py-2 disabled:opacity-50"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-4 py-2 disabled:opacity-50"
                     disabled={!message.trim() || isLoading}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">

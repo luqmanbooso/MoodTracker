@@ -6,7 +6,7 @@ import { createMood } from '../services/api';
 import { useProgress } from '../contexts/ProgressContext';
 import '../styles/MoodForm.css';
 
-const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = false, onSubmit, initialMood = '', initialIntensity = 3, initialNotes = '' }) => {
+const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = false, onSubmit, initialMood = '', initialIntensity = 3, initialNotes = '', moods = [], habits = [], goals = [] }) => {
   const { darkMode } = useTheme();
   
   // Fix the hook usage - don't conditionally call hooks
@@ -245,7 +245,12 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
                   tags: []
                 });
               }, 1000);
-            }} />
+            }} 
+            customMoodCategories={customMoodCategories}
+            moods={moods}
+            habits={habits}
+            goals={goals}
+            />
           </div>
         </div>
       ) : (
@@ -283,7 +288,13 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
             </div>
             
             <div className="mt-3">
-              <VoiceMoodInput onMoodDetected={(mood) => setMoodData({...moodData, ...mood})} />
+              <VoiceMoodInput 
+                onMoodDetected={(mood) => setMoodData({...moodData, ...mood})} 
+                customMoodCategories={customMoodCategories}
+                moods={moods}
+                habits={habits}
+                goals={goals}
+              />
             </div>
           </div>
           

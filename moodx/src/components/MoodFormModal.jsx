@@ -2,7 +2,7 @@ import React from 'react';
 import { useTheme } from '../context/ThemeContext';
 import MoodForm from './MoodForm';
 
-const MoodFormModal = ({ onClose, onSave, isLoading }) => {
+const MoodFormModal = ({ onClose, onSave, isLoading, customMoodCategories = [], moods = [], habits = [], goals = [] }) => {
   const { darkMode } = useTheme();
   
   return (
@@ -27,6 +27,10 @@ const MoodFormModal = ({ onClose, onSave, isLoading }) => {
           <MoodForm 
             addMood={onSave}
             isLoading={isLoading}
+            customMoodCategories={customMoodCategories}
+            moods={moods}
+            habits={habits}
+            goals={goals}
           />
         </div>
       </div>

@@ -1,316 +1,359 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import VoiceMoodAIModal from './VoiceMoodAIModal';
 
-const VoiceMoodInput = ({ onMoodDetected }) => {
+const VoiceMoodInput = ({ onMoodDetected, customMoodCategories = [], moods = [], habits = [], goals = [] }) => {
   const { theme } = useTheme();
   const [isListening, setIsListening] = useState(false);
-  const [speechSupported, setSpeechSupported] = useState(true);
   const [transcript, setTranscript] = useState('');
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [recognitionInstance, setRecognitionInstance] = useState(null);
-  const [detectedInfo, setDetectedInfo] = useState({});
-  const [showRecognizedInfo, setShowRecognizedInfo] = useState(false);
+  const [error, setError] = useState(null);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
+  const [detectedMood, setDetectedMood] = useState(null);
+  const [detectedCustomMood, setDetectedCustomMood] = useState(null);
+  const [detectedIntensity, setDetectedIntensity] = useState(null);
+  const [detectedNote, setDetectedNote] = useState(null);
 
-  // Check if SpeechRecognition is supported
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setSpeechSupported(false);
-      setErrorMsg('Speech recognition is not supported in your browser.');
+  // Standard mood keywords mapping
+  const standardMoods = {
+    'Great': ['amazing', 'fantastic', 'wonderful', 'excellent', 'terrific', 'great', 'awesome', 'ecstatic', 'delighted', 'joyful', 'thrilled'],
+    'Good': ['good', 'happy', 'positive', 'pleased', 'glad', 'content', 'satisfied', 'nice', 'well', 'fine'],
+    'Okay': ['okay', 'ok', 'alright', 'so-so', 'moderate', 'average', 'fine', 'neutral', 'fair', 'decent'],
+    'Bad': ['bad', 'unhappy', 'negative', 'sad', 'upset', 'down', 'disappointed', 'displeased', 'unpleasant', 'low'],
+    'Terrible': ['terrible', 'awful', 'horrible', 'miserable', 'depressed', 'devastated', 'dreadful', 'wretched', 'gloomy', 'distressed']
+  };
+
+  // Custom mood detection
+  const detectCustomMood = (text) => {
+    // Early return if no custom moods
+    if (!customMoodCategories || customMoodCategories.length === 0) return null;
+    
+    // Convert input to lowercase for matching
+    const lowercaseText = text.toLowerCase();
+    
+    // Direct matches - check if the custom mood is mentioned directly
+    for (const customMood of customMoodCategories) {
+      if (lowercaseText.includes(customMood.toLowerCase())) {
+        return customMood;
+      }
+    }
+    
+    // More advanced matching could check for synonyms or partial matches
+    // For example, "I'm feeling motivated today" should match "Motivated"
+    const customMoodKeywords = {
+      'Motivated': ['motivated', 'driven', 'determined', 'inspired', 'ambitious', 'energetic'],
+      'Anxious': ['anxious', 'nervous', 'worried', 'uneasy', 'tense', 'apprehensive', 'concerned'],
+      'Energetic': ['energetic', 'lively', 'vibrant', 'active', 'dynamic', 'vigorous', 'peppy'],
+      'Creative': ['creative', 'imaginative', 'inspired', 'artistic', 'innovative', 'inventive'],
+      'Bored': ['bored', 'tedious', 'monotonous', 'dull', 'uninterested', 'apathetic'],
+      'Relaxed': ['relaxed', 'calm', 'peaceful', 'serene', 'tranquil', 'at ease', 'chill'],
+      'Stressed': ['stressed', 'pressure', 'overwhelmed', 'tense', 'strained', 'frazzled'],
+      'Grateful': ['grateful', 'thankful', 'appreciative', 'blessed', 'fortunate'],
+      'Frustrated': ['frustrated', 'annoyed', 'irritated', 'exasperated', 'aggravated'],
+      'Excited': ['excited', 'thrilled', 'eager', 'enthusiastic', 'animated', 'pumped']
+    };
+    
+    // Add any custom moods not in our predefined list
+    for (const mood of customMoodCategories) {
+      if (!customMoodKeywords[mood]) {
+        customMoodKeywords[mood] = [mood.toLowerCase()];
+      }
+    }
+    
+    // Check for keyword matches
+    for (const [mood, keywords] of Object.entries(customMoodKeywords)) {
+      // Only consider moods that are in our customMoodCategories
+      if (customMoodCategories.includes(mood)) {
+        for (const keyword of keywords) {
+          if (lowercaseText.includes(keyword)) {
+            return mood;
+          }
+        }
+      }
+    }
+    
+    // Check for sentiment patterns that might indicate specific custom moods
+    if (lowercaseText.includes('can\'t focus') || lowercaseText.includes('distracted')) {
+      return customMoodCategories.includes('Distracted') ? 'Distracted' : null;
+    }
+    
+    if (lowercaseText.includes('proud') || lowercaseText.includes('accomplished')) {
+      return customMoodCategories.includes('Proud') ? 'Proud' : null;
+    }
+    
+    if (lowercaseText.includes('lonely') || lowercaseText.includes('alone') || lowercaseText.includes('isolated')) {
+      return customMoodCategories.includes('Lonely') ? 'Lonely' : null;
+    }
+    
+    return null;
+  };
+  
+  // Standard mood detection
+  const detectMood = (text) => {
+    const lowercaseText = text.toLowerCase();
+    
+    // Check for standard mood keywords
+    for (const [mood, keywords] of Object.entries(standardMoods)) {
+      for (const keyword of keywords) {
+        if (lowercaseText.includes(keyword)) {
+          return mood;
+        }
+      }
+    }
+    
+    // Look for common expressions/patterns
+    if (lowercaseText.includes('not feeling') || lowercaseText.includes('feeling bad')) {
+      return 'Bad';
+    }
+    
+    if (lowercaseText.includes('just okay') || lowercaseText.includes('not bad')) {
+      return 'Okay';
+    }
+    
+    // Detect negativity - if venting or complaining, likely in a bad mood
+    const negativeWords = ['hate', 'sucks', 'terrible', 'worst', 'annoyed', 'annoying', 'frustrated', 'fucked', 'shit', 'hell', 'damn'];
+    
+    for (const word of negativeWords) {
+      if (lowercaseText.includes(word)) {
+        return 'Bad';
+      }
+    }
+    
+    // Detect swearing or strong negative language - might indicate terrible mood
+    const strongNegatives = ['fucking', 'fuck', 'bullshit', 'hate', 'kill', 'furious', 'pissed'];
+    
+    for (const word of strongNegatives) {
+      if (lowercaseText.includes(word)) {
+        return 'Terrible';
+      }
+    }
+    
+    // Default to Okay if no mood detected
+    return 'Okay';
+  };
+  
+  // Detect intensity from speech (1-10)
+  const detectIntensity = (text) => {
+    const lowercaseText = text.toLowerCase();
+    
+    // Check for explicit intensity mentions
+    const intensityMatch = lowercaseText.match(/intensity (?:of|is) (\d+)/i) || 
+                          lowercaseText.match(/(\d+) out of 10/i) ||
+                          lowercaseText.match(/(\d+) out of ten/i) ||
+                          lowercaseText.match(/level (\d+)/i) ||
+                          lowercaseText.match(/rating (?:of|is) (\d+)/i);
+    
+    if (intensityMatch && intensityMatch[1]) {
+      const intensity = parseInt(intensityMatch[1], 10);
+      if (intensity >= 1 && intensity <= 10) {
+        return intensity;
+      }
+    }
+    
+    // Check for intensity keywords
+    const intensityKeywords = {
+      'extremely': 9,
+      'very': 8,
+      'really': 7,
+      'quite': 6,
+      'somewhat': 5,
+      'moderately': 5,
+      'slightly': 3,
+      'a little': 2,
+      'barely': 1,
+      'highly': 8,
+      'intensely': 9,
+      'immensely': 9,
+      'incredibly': 10
+    };
+    
+    for (const [keyword, value] of Object.entries(intensityKeywords)) {
+      if (lowercaseText.includes(keyword)) {
+        return value;
+      }
+    }
+    
+    // Default intensity based on detected mood
+    if (lowercaseText.includes('great') || lowercaseText.includes('amazing')) return 9;
+    if (lowercaseText.includes('good')) return 7;
+    if (lowercaseText.includes('okay') || lowercaseText.includes('ok')) return 5;
+    if (lowercaseText.includes('bad')) return 3;
+    if (lowercaseText.includes('terrible') || lowercaseText.includes('awful')) return 1;
+    
+    return 5; // Default intensity
+  };
+  
+  // Extract note content
+  const extractNote = (text) => {
+    // Remove mood statements
+    let noteContent = text.replace(/I(?:'m| am) feeling [a-z]+/gi, '')
+                        .replace(/I feel [a-z]+/gi, '')
+                        .replace(/feeling [a-z]+/gi, '')
+                        .trim();
+                        
+    // If the note is too short after removing mood statements, use the original text
+    if (noteContent.length < 10) {
+      noteContent = text;
+    }
+    
+    return noteContent;
+  };
+
+  const startListening = () => {
+    setError(null);
+    setIsListening(true);
+    setTranscript('');
+    
+    // Check if browser supports speech recognition
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      setError("Your browser doesn't support speech recognition. Try Chrome.");
+      setIsListening(false);
       return;
     }
-
+    
+    // Create speech recognition object
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
+    
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
-
+    
     recognition.onstart = () => {
       setIsListening(true);
-      setErrorMsg(null);
-      setShowRecognizedInfo(false);
     };
-
-    recognition.onerror = (event) => {
-      console.error('Speech recognition error:', event.error);
-      setIsListening(false);
+    
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0])
+        .map(result => result.transcript)
+        .join('');
       
-      if (event.error === 'not-allowed') {
-        setErrorMsg('Microphone access denied. Please allow microphone access to use voice input.');
-      } else if (event.error === 'no-speech') {
-        setErrorMsg('No speech detected. Please try again.');
-      } else {
-        setErrorMsg(`Error: ${event.error}`);
-      }
+      setTranscript(transcript);
     };
-
+    
+    recognition.onerror = (event) => {
+      setError(`Error: ${event.error}`);
+      setIsListening(false);
+    };
+    
     recognition.onend = () => {
       setIsListening(false);
-      if (Object.keys(detectedInfo).length > 0) {
-        setShowRecognizedInfo(true);
+      
+      // Process the final transcript
+      if (transcript) {
+        processTranscript(transcript);
       }
     };
-
-    recognition.onresult = (event) => {
-      const current = event.resultIndex;
-      const currentTranscript = event.results[current][0].transcript;
-      setTranscript(currentTranscript);
-      
-      // Process transcript to detect mood
-      const moodKeywords = {
-        'Great': ['amazing', 'excellent', 'fantastic', 'great', 'wonderful', 'incredible', 'superb', 'outstanding', 'awesome', 'terrific', 'exceptional'],
-        'Good': ['good', 'well', 'fine', 'nice', 'pleasant', 'positive', 'satisfied', 'content', 'happy', 'cheerful', 'glad'],
-        'Okay': ['okay', 'ok', 'alright', 'so so', 'decent', 'fair', 'average', 'moderate', 'neutral', 'neither good nor bad'],
-        'Bad': ['bad', 'poor', 'unpleasant', 'negative', 'sad', 'unhappy', 'rough', 'tough', 'difficult', 'troubled', 'not good', 'not great'],
-        'Terrible': ['terrible', 'awful', 'horrible', 'dreadful', 'miserable', 'depressed', 'devastated', 'worst', 'very bad', 'extremely bad']
-      };
-      
-      // Detect mood from transcript
-      const lowerTranscript = currentTranscript.toLowerCase();
-      let detectedMood = null;
-      
-      Object.entries(moodKeywords).forEach(([mood, keywords]) => {
-        if (!detectedMood && keywords.some(keyword => lowerTranscript.includes(keyword))) {
-          detectedMood = mood;
-        }
-      });
-      
-      // Parse activity mentions
-      const activities = [];
-      const activityKeywords = {
-        'Exercise': ['exercise', 'workout', 'gym', 'run', 'running', 'jog', 'fitness', 'training'],
-        'Work': ['work', 'job', 'office', 'meeting', 'project', 'client', 'study', 'studying'],
-        'Family': ['family', 'kids', 'children', 'parents', 'mom', 'dad', 'brother', 'sister'],
-        'Friends': ['friends', 'friend', 'social', 'hangout', 'party', 'gathering'],
-        'Hobby': ['hobby', 'reading', 'painting', 'music', 'gaming', 'cooking', 'gardening'],
-        'Rest': ['rest', 'sleep', 'nap', 'relax', 'break', 'chill', 'calm', 'peace'],
-        'Other': []
-      };
-      
-      Object.entries(activityKeywords).forEach(([activity, keywords]) => {
-        if (keywords.some(keyword => lowerTranscript.includes(keyword))) {
-          activities.push(activity);
-        }
-      });
-      
-      // Parse custom moods as well - extract any emotions described
-      const emotionMatches = lowerTranscript.match(/(?:feeling|feel|am|i'm|im)\s+(\w+)/i);
-      let customMood = '';
-      
-      if (emotionMatches && emotionMatches[1]) {
-        customMood = emotionMatches[1].charAt(0).toUpperCase() + emotionMatches[1].slice(1);
-      }
-      
-      // Extract note content - anything after "because" or similar transition words
-      const noteRegex = /(?:because|since|as|due to|for|given that)\s+(.*)/i;
-      const noteMatches = lowerTranscript.match(noteRegex);
-      let note = '';
-      
-      if (noteMatches && noteMatches[1]) {
-        note = noteMatches[1].charAt(0).toUpperCase() + noteMatches[1].slice(1);
-      }
-      
-      // Extract tags - keywords prefixed with "tag" or "hashtag"
-      const tagRegex = /(?:tag|hashtag)\s+(\w+)/gi;
-      const tags = [];
-      let tagMatch;
-      while ((tagMatch = tagRegex.exec(lowerTranscript)) !== null) {
-        tags.push(tagMatch[1]);
-      }
-      
-      // Intensity detection
-      let intensity = 5; // Default mid-value
-      const intensityRegex = /(?:intensity|level|rating|score)\s+(?:of|is)\s+(\d+)/i;
-      const intensityMatch = lowerTranscript.match(intensityRegex);
-      if (intensityMatch && intensityMatch[1]) {
-        const parsedIntensity = parseInt(intensityMatch[1], 10);
-        if (!isNaN(parsedIntensity) && parsedIntensity >= 1 && parsedIntensity <= 10) {
-          intensity = parsedIntensity;
-        }
-      } else if (lowerTranscript.includes('very') || lowerTranscript.includes('extremely')) {
-        intensity = 8;
-      } else if (lowerTranscript.includes('somewhat') || lowerTranscript.includes('kind of')) {
-        intensity = 4;
-      }
-      
-      // Compile detected info
-      const detectedData = {
-        mood: detectedMood,
-        customMood: customMood,
-        note: note,
-        activities: activities,
-        tags: tags,
-        intensity: intensity
-      };
-      
-      // Filter out undefined/empty values
-      const filteredData = Object.fromEntries(
-        Object.entries(detectedData).filter(([_, v]) => {
-          if (Array.isArray(v)) return v.length > 0;
-          return v !== null && v !== undefined && v !== '';
-        })
-      );
-      
-      setDetectedInfo(filteredData);
-      
-      if (Object.keys(filteredData).length > 0) {
-        onMoodDetected(filteredData);
-      }
-    };
-
-    setRecognitionInstance(recognition);
     
-    return () => {
-      if (isListening && recognition) {
+    recognition.start();
+    
+    // Stop listening after 10 seconds if no result
+    setTimeout(() => {
+      if (isListening) {
         recognition.stop();
       }
-    };
-  }, [onMoodDetected]);
-
-  const toggleListening = () => {
-    if (!speechSupported) return;
+    }, 10000);
+  };
+  
+  const processTranscript = (text) => {
+    // Detect mood and intensity
+    const mood = detectMood(text);
+    const customMood = detectCustomMood(text);
+    const intensity = detectIntensity(text);
+    const note = extractNote(text);
     
-    if (isListening) {
-      recognitionInstance.stop();
-    } else {
-      setTranscript('');
-      setDetectedInfo({});
-      recognitionInstance.start();
+    // Set detected values to state
+    setDetectedMood(mood);
+    setDetectedCustomMood(customMood);
+    setDetectedIntensity(intensity);
+    setDetectedNote(note);
+    
+    // Prepare result
+    const result = {
+      mood,
+      intensity,
+      note
+    };
+    
+    if (customMood) {
+      result.customMood = customMood;
     }
+    
+    // Send to parent component
+    onMoodDetected(result);
+    
+    // Show AI modal
+    setShowAIModal(true);
+  };
+  
+  const handleCloseModal = () => {
+    setShowAIModal(false);
   };
 
-  if (!speechSupported) {
-    return (
-      <div className="mt-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/30 rounded-lg p-3">
-        <div className="flex items-start">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-500 mt-0.5 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-          </svg>
-          <span className="text-sm text-yellow-800 dark:text-yellow-200">
-            Speech recognition is not supported in your browser. Please use a different browser or input your mood manually.
-          </span>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="relative">
-      <div className={`flex items-center ${isListening ? `bg-${theme.primaryColor}-50 dark:bg-${theme.primaryColor}-900/10` : ''} rounded-lg p-2 transition-colors`}>
+    <>
+      <div className="relative">
         <button
           type="button"
-          onClick={toggleListening}
-          className={`p-3 rounded-full transition-colors ${
-            isListening
-              ? `bg-${theme.primaryColor}-500 text-white animate-pulse`
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-          }`}
+          onClick={startListening}
+          onMouseEnter={() => setShowTooltip(true)}
+          onMouseLeave={() => setShowTooltip(false)}
+          disabled={isListening}
+          className={`flex items-center justify-center p-2 rounded-full ${
+            isListening 
+              ? 'bg-red-500 animate-pulse' 
+              : 'bg-emerald-500 hover:bg-emerald-600'
+          } text-white transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50`}
+          aria-label={isListening ? "Listening..." : "Talk about how you feel"}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-          </svg>
+          {isListening ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+            </svg>
+          )}
         </button>
         
-        <div className="ml-3 flex-grow">
-          {isListening ? (
-            <div>
-              <div className="text-sm font-medium text-gray-800 dark:text-gray-200">Listening...</div>
-              <div className="flex space-x-1 mt-1">
-                <div className="w-1 h-3 bg-blue-500 rounded-full animate-wave" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-1 h-3 bg-blue-500 rounded-full animate-wave" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-1 h-3 bg-blue-500 rounded-full animate-wave" style={{ animationDelay: '300ms' }}></div>
-                <div className="w-1 h-3 bg-blue-500 rounded-full animate-wave" style={{ animationDelay: '450ms' }}></div>
-                <div className="w-1 h-3 bg-blue-500 rounded-full animate-wave" style={{ animationDelay: '600ms' }}></div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              {transcript ? 
-                <div className="py-1">
-                  <div className="font-medium text-gray-800 dark:text-gray-200">Last recording:</div>
-                  <div className="italic">"{transcript}"</div>
-                </div> : 
-                "Click the microphone and tell us how you're feeling"
-              }
-            </div>
-          )}
-        </div>
+        {/* Tooltip */}
+        {showTooltip && (
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 text-xs font-medium text-white bg-gray-900 rounded-lg shadow-lg">
+            {isListening ? 'Listening...' : 'Talk about how you feel'}
+            <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-1 w-2 h-2 bg-gray-900 rotate-45"></div>
+          </div>
+        )}
+        
+        {/* Status display */}
+        {isListening && (
+          <div className="absolute left-full ml-2 whitespace-nowrap text-sm">
+            Listening... <span className="italic text-gray-400">{transcript}</span>
+          </div>
+        )}
+        
+        {/* Error message */}
+        {error && (
+          <div className="absolute top-full left-0 mt-1 text-xs text-red-500">
+            {error}
+          </div>
+        )}
       </div>
       
-      {errorMsg && (
-        <div className="mt-2 text-sm text-red-600 dark:text-red-400">
-          {errorMsg}
-        </div>
+      {/* AI Modal */}
+      {showAIModal && (
+        <VoiceMoodAIModal 
+          transcript={transcript}
+          detectedMood={detectedMood}
+          detectedCustomMood={detectedCustomMood}
+          onClose={handleCloseModal}
+          moods={moods}
+          habits={habits}
+          goals={goals}
+        />
       )}
-      
-      {showRecognizedInfo && Object.keys(detectedInfo).length > 0 && (
-        <div className={`mt-3 p-3 bg-${theme.primaryColor}-50 dark:bg-${theme.primaryColor}-900/10 rounded-lg border border-${theme.primaryColor}-100 dark:border-${theme.primaryColor}-800/30`}>
-          <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">I heard:</h4>
-          <ul className="space-y-1 text-sm">
-            {detectedInfo.mood && (
-              <li className="flex items-center">
-                <span className="font-medium mr-2">Mood:</span> 
-                <span className={`px-2 py-0.5 rounded-full text-white bg-${
-                  detectedInfo.mood === 'Great' ? 'green' : 
-                  detectedInfo.mood === 'Good' ? 'blue' : 
-                  detectedInfo.mood === 'Okay' ? 'yellow' : 
-                  detectedInfo.mood === 'Bad' ? 'orange' : 'red'
-                }-500`}>
-                  {detectedInfo.mood}
-                </span>
-              </li>
-            )}
-            {detectedInfo.customMood && (
-              <li><span className="font-medium">Specific feeling:</span> {detectedInfo.customMood}</li>
-            )}
-            {detectedInfo.note && (
-              <li><span className="font-medium">Note:</span> {detectedInfo.note}</li>
-            )}
-            {detectedInfo.activities && detectedInfo.activities.length > 0 && (
-              <li>
-                <span className="font-medium">Activities:</span> 
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {detectedInfo.activities.map(activity => (
-                    <span key={activity} className="px-2 py-0.5 bg-gray-200 dark:bg-gray-700 rounded-full text-xs">
-                      {activity}
-                    </span>
-                  ))}
-                </div>
-              </li>
-            )}
-            {detectedInfo.tags && detectedInfo.tags.length > 0 && (
-              <li>
-                <span className="font-medium">Tags:</span> 
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {detectedInfo.tags.map(tag => (
-                    <span key={tag} className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200 rounded-full text-xs">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </li>
-            )}
-            {detectedInfo.intensity && (
-              <li><span className="font-medium">Intensity:</span> {detectedInfo.intensity}/10</li>
-            )}
-          </ul>
-          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            These details have been filled in the form. You can edit them if needed.
-          </div>
-        </div>
-      )}
-      
-      {!isListening && !errorMsg && !showRecognizedInfo && (
-        <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-          <p>Try phrases like:</p>
-          <ul className="list-disc pl-5 mt-1 space-y-1">
-            <li>"I'm feeling good because I accomplished my goals today"</li>
-            <li>"I feel anxious with an intensity of 7 because of my upcoming presentation"</li>
-            <li>"I'm great after exercising and reading, tag productive"</li>
-          </ul>
-        </div>  
-      )}
-    </div>
+    </>
   );
 };
 
