@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import Logo from './Logo'; // Import the Logo component
 
 const Navigation = ({ activeView, setView, openSettingsModal }) => {
   const { darkMode } = useTheme();
@@ -66,13 +67,8 @@ const Navigation = ({ activeView, setView, openSettingsModal }) => {
       {/* Desktop sidebar navigation */}
       <div className="hidden md:flex md:flex-col md:fixed md:h-screen md:w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
         {/* Logo */}
-        <div className="p-5 border-b border-gray-200 dark:border-gray-800">
-          <div className={`text-xl font-bold ${styles.logo} flex items-center`}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-7.536 5.879a1 1 0 001.414 0 3 3 0 014.242 0 1 1 0 001.414-1.414 5 5 0 00-7.07 0 1 1 0 000 1.414z" clipRule="evenodd" />
-            </svg>
-            MoodX
-          </div>
+        <div className="p-5 border-b border-gray-200 dark:border-gray-800 flex justify-center">
+          <Logo size="medium" showTagline={true} />
         </div>
         
         {/* Navigation Items */}
@@ -116,12 +112,7 @@ const Navigation = ({ activeView, setView, openSettingsModal }) => {
       {/* Mobile top bar */}
       <div className="fixed top-0 left-0 right-0 md:hidden z-30 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
         <div className="flex justify-between items-center px-4 py-3">
-          <div className={`text-xl font-bold ${styles.logo} flex items-center`}>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-7.536 5.879a1 1 0 001.414 0 3 3 0 014.242 0 1 1 0 001.414-1.414 5 5 0 00-7.07 0 1 1 0 000 1.414z" clipRule="evenodd" />
-            </svg>
-            MoodX
-          </div>
+          <Logo size="small" showTagline={false} />
           <button
             onClick={openSettingsModal}
             className={`p-2 rounded-full ${styles.navText} ${styles.navTextHover}`}
