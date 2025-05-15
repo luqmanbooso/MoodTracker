@@ -34,6 +34,7 @@ import { ProgressProvider } from './contexts/ProgressContext';
 // Add the new imports
 import { ChallengeProvider } from './contexts/ChallengeContext';
 import ChallengesPage from './components/gamification/ChallengesPage';
+import FloatingChatButton from './components/FloatingChatButton'; // Add this import
 
 // Main App component wrapper with ThemeProvider
 function AppWithTheme() {
@@ -965,6 +966,13 @@ function AppContent() {
           {view === 'progress' && (
             <ProgressPage />
           )}
+          
+          {/* Add the floating chat button */}
+          <FloatingChatButton 
+            moods={moods} 
+            habits={habits} 
+            goals={goals} 
+          />
         </div>
       </div>
 

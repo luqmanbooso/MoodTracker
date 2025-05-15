@@ -25,16 +25,10 @@ app.use('/api/progress', progressRoutes);
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
 }).then(async () => {
   console.log('Connected to MongoDB');
+
   
-  // Initialize database with test data
-  await initializeDatabase();
-  
-  // Seed initial resources
-  seedResources();
   
   // Start the server after initialization
   app.listen(5000, () => console.log('Server running on port 5000'));

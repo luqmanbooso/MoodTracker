@@ -12,18 +12,94 @@ export const getAIResponse = async (req, res) => {
       return res.status(400).json({ error: 'Message is required' });
     }
 
-    // Create a richer context about the user
-    const moodContext = context?.moods?.length > 0 
-      ? `Your recent moods: ${context.moods.map(m => `${m.mood} on ${new Date(m.date).toLocaleDateString()}`).join(', ')}.` 
-      : 'I don\'t have any mood records yet.';
+    // Enhanced mood analysis with trend detection
+    let moodTrend = '';
+    let moodSummary = '';
     
-    const habitContext = context?.habits?.length > 0
-      ? `Your current habits: ${context.habits.map(h => `${h.name} (${h.completed ? 'completed today' : 'not completed today'})`).join(', ')}.`
-      : 'You haven\'t set up any habits yet.';
+    if (context?.moods?.length > 0) {
+      // Get recent moods (last 7 entries or less)
+      const recentMoods = context.moods.slice(0, 7);
+      
+      // Calculate mood score based on intensity
+      const moodScores = recentMoods.map(m => m.intensity || 5);
+      const averageMood = moodScores.reduce((a, b) => a + b, 0) / moodScores.length;
+      
+      // Check if we have enough moods to determine a trend
+      if (recentMoods.length > 2) {
+        const firstHalf = moodScores.slice(0, Math.ceil(moodScores.length/2));
+        const secondHalf = moodScores.slice(Math.ceil(moodScores.length/2));
+        
+        const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+        const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+        
+        // Determine trend
+        if (secondAvg > firstAvg + 0.5) {
+          moodTrend = "Your mood has been improving recently. ";
+        } else if (secondAvg < firstAvg - 0.5) {
+          moodTrend = "Your mood has been declining recently. ";
+        } else {
+          moodTrend = "Your mood has been relatively stable recently. ";
+        }
+      }
+      
+      // Create mood summary
+      const moodFrequency = {};
+      recentMoods.forEach(m => {
+        moodFrequency[m.mood] = (moodFrequency[m.mood] || 0) + 1;
+      });
+      
+      // Find most common mood
+      let mostCommonMood = '';
+      let highestCount = 0;
+      for (const [mood, count] of Object.entries(moodFrequency)) {
+        if (count > highestCount) {
+          mostCommonMood = mood;
+          highestCount = count;
+        }
+      }
+      
+      moodSummary = `Your most frequent mood lately has been "${mostCommonMood}" (${highestCount} times). `;
+      
+      const moodContext = `Recent moods: ${recentMoods.map(m => 
+        `${m.mood} (intensity: ${m.intensity || 5}) on ${new Date(m.date).toLocaleDateString()}`
+      ).join(', ')}. ${moodTrend}${moodSummary}`;
+    } else {
+      moodSummary = 'I don\'t have any mood records yet.';
+    }
     
-    const goalContext = context?.goals?.length > 0
-      ? `Your goals: ${context.goals.map(g => `${g.title} (${g.progress || 0}% complete)`).join(', ')}.`
-      : 'You haven\'t set any goals yet.';
+    // Enhanced habit context with completion stats
+    let habitSummary = '';
+    if (context?.habits?.length > 0) {
+      const completedCount = context.habits.filter(h => h.completed).length;
+      const completionRate = Math.round((completedCount / context.habits.length) * 100);
+      
+      habitSummary = `You've completed ${completedCount} out of ${context.habits.length} habits (${completionRate}% completion rate). `;
+      
+      const habitContext = `Your current habits: ${context.habits.map(h => 
+        `${h.name} (${h.completed ? 'completed today' : 'not completed today'})`
+      ).join(', ')}. ${habitSummary}`;
+    } else {
+      habitSummary = 'You haven\'t set up any habits yet.';
+    }
+    
+    // Enhanced goal context with progress
+    let goalSummary = '';
+    if (context?.goals?.length > 0) {
+      const averageProgress = Math.round(
+        context.goals.reduce((sum, goal) => sum + (goal.progress || 0), 0) / context.goals.length
+      );
+      
+      goalSummary = `You're making ${
+        averageProgress < 30 ? 'initial' : 
+        averageProgress < 70 ? 'steady' : 'excellent'
+      } progress on your goals (${averageProgress}% average completion). `;
+      
+      const goalContext = `Your goals: ${context.goals.map(g => 
+        `${g.title} (${g.progress || 0}% complete)`
+      ).join(', ')}. ${goalSummary}`;
+    } else {
+      goalSummary = 'You haven\'t set any goals yet.';
+    }
 
     // Call OpenRouter API with a valid model ID
     const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
@@ -35,15 +111,24 @@ export const getAIResponse = async (req, res) => {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        "model": "anthropic/claude-3-haiku", // UPDATED: Removed date suffix
+        "model": "anthropic/claude-3-haiku",
         "messages": [
           {
             "role": "system",
-            "content": "You are 'Mindset Coach', an accountability coach in a mood tracking app. Your responses should be concise (1-3 sentences), direct but compassionate. Focus on practical steps users can take. Use a firm but supportive tone. When users express negative emotions, acknowledge them briefly then suggest concrete actions. Refer to their tracked data when relevant. Never give medical advice."
+            "content": `You are 'Mindset Coach', an accountability coach in a mood tracking app. Your responses should be concise (1-3 sentences), direct but compassionate. Focus on practical steps users can take.
+
+When responding, specifically reference their mood trends and patterns. If their mood is declining, offer targeted support and practical actions. If improving, offer reinforcement and ways to maintain progress.
+
+Here's a summary of the user's current state:
+- Mood trends: ${moodTrend}${moodSummary}
+- Habits: ${habitSummary}
+- Goals: ${goalSummary}
+
+Use a firm but supportive tone. Refer to their tracked data specifically. Never give medical advice.`
           },
           {
             "role": "user",
-            "content": `${moodContext}\n${habitContext}\n${goalContext}\n\nMy message to you: ${message}`
+            "content": `My message to you: ${message}`
           }
         ],
         "temperature": 0.5,
@@ -79,13 +164,6 @@ export const getAIResponse = async (req, res) => {
 
     console.log('Sending AI response:', { response: responseText, action, source: 'openrouter' });
     
-    // Add this before returning the response to client
-    console.log('Final response being sent to client:', { 
-      response: responseText, 
-      action,
-      source: 'openrouter'
-    });
-
     return res.json({ 
       response: responseText, 
       action,
@@ -94,39 +172,11 @@ export const getAIResponse = async (req, res) => {
   } catch (error) {
     console.error('AI Response Error:', error);
     
-    // Create a more personalized fallback response based on the message content
-    const fallbackResponses = createPersonalizedFallback(req.body.message, req.body.context);
-    
-    return res.json({
-      response: fallbackResponses.message,
-      action: fallbackResponses.action,
-      source: 'fallback'
+    // Better error handling instead of using fallback responses
+    return res.status(500).json({
+      response: "I'm having trouble connecting right now. Please try again shortly.",
+      error: error.message,
+      source: 'error'
     });
   }
 };
-
-// Create a personalized fallback function
-function createPersonalizedFallback(message, context) {
-  const lowercaseMessage = message.toLowerCase();
-  
-  // Default fallback
-  let response = {
-    message: "Focus on what you can control today. What's one small step you can take right now?",
-    action: 'habits'
-  };
-  
-  // Tailor response based on message content
-  if (lowercaseMessage.includes('sad') || lowercaseMessage.includes('depress') || 
-      lowercaseMessage.includes('down')) {
-    response.message = "Acknowledge those feelings without judgment. What's one tiny step that might improve your day, even slightly?";
-  }
-  else if (lowercaseMessage.includes('anxious') || lowercaseMessage.includes('worry') || 
-           lowercaseMessage.includes('stress')) {
-    response.message = "Anxiety often comes from focusing too far ahead. What's one small action within your control right now?";
-  }
-  else if (lowercaseMessage.includes('motivat') || lowercaseMessage.includes('stuck')) {
-    response.message = "Motivation is unreliable. Build systems you can follow even on your worst days. What's one habit you can strengthen today?";
-  }
-  
-  return response;
-}
