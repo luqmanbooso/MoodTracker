@@ -1,9 +1,8 @@
 import express from 'express';
 import { 
-  getUserProgress, 
-  getAchievements, 
-  getUserStats,
-  awardPoints
+  getProgress, 
+  awardPoints, 
+  getActivities 
 } from '../controllers/progressController.js';
 import { authenticateUser } from '../middleware/auth.js';
 
@@ -13,15 +12,12 @@ const router = express.Router();
 router.use(authenticateUser);
 
 // Get user progress
-router.get('/', getUserProgress);
-
-// Get all user achievements
-router.get('/achievements', getAchievements);
-
-// Get user stats
-router.get('/stats', getUserStats);
+router.get('/', getProgress);
 
 // Award points to user
 router.post('/points', awardPoints);
+
+// Get user's recent activities
+router.get('/activities', getActivities);
 
 export default router;

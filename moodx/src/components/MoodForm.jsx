@@ -120,6 +120,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    setLoading(true);
     
     try {
       // Call the API function to create mood
@@ -139,12 +140,18 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
         onSubmit(moodData);
       }
       
+      // Show success animation regardless of points awarding
+      setShowSuccess(true);
+      
       // Award points if the function is available
       if (awardPoints) {
         try {
           await awardPoints(10, 'mood_entry', 'Logged your daily mood');
+          console.log('Points awarded successfully');
         } catch (pointsError) {
           console.error('Error awarding points:', pointsError);
+          // Continue the form submission even if points can't be awarded
+          // The user experience shouldn't be affected by points system errors
         }
       }
       
@@ -158,9 +165,11 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
         tags: []
       });
       
+      setLoading(false);
       return true;
     } catch (error) {
       console.error('Error submitting mood:', error);
+      setLoading(false);
       return false;
     }
   };
@@ -433,10 +442,10 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories = [], simplified = 
           {/* Animated submit button */}
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={loading}
             className="w-full bg-gradient-to-r from-emerald-500 to-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-emerald-600 transition-all duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
           >
-            {isLoading ? (
+            {loading ? (
               <>
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
