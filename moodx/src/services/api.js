@@ -16,17 +16,28 @@ export const getMoods = async () => {
 
 export const createMood = async (moodData) => {
   try {
+    console.log('Sending mood data to API:', moodData);
     const response = await fetch(`${API_URL}/moods`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(moodData),
+      body: JSON.stringify({
+        mood: moodData.mood,
+        customMood: moodData.customMood || '',
+        intensity: moodData.intensity,
+        note: moodData.note || '',
+        activities: moodData.activities || [],
+        tags: moodData.tags || [],
+      }),
     });
     if (!response.ok) {
-      throw new Error(`Failed to create mood: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Failed to create mood: ${response.status} - ${errorData.message || 'Unknown error'}`);
     }
-    return await response.json();
+    const responseData = await response.json();
+    console.log('Mood created successfully:', responseData);
+    return responseData;
   } catch (error) {
     console.error('Error creating mood:', error);
     throw error;

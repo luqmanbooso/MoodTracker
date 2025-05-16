@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '../context/ThemeContext';
 import { toast } from 'react-toastify';
 
 // Enhanced Settings component that works both as modal and page
@@ -10,7 +9,6 @@ const Settings = ({
   onAddCustomMood, 
   onRemoveCustomMood 
 }) => {
-  const { darkMode, toggleDarkMode } = useTheme();
   const [newMoodCategory, setNewMoodCategory] = useState('');
   const [activeTab, setActiveTab] = useState('appearance');
   const [userName, setUserName] = useState(() => {
@@ -22,7 +20,8 @@ const Settings = ({
     console.log("Settings component rendered with isOpen:", isOpen);
   }, [isOpen]);
 
-  const handleAddMoodCategory = () => {
+  const handleAddMoodCategory = (e) => {
+    e.preventDefault(); // Prevent form submission
     if (newMoodCategory && !customMoodCategories.includes(newMoodCategory)) {
       onAddCustomMood(newMoodCategory);
       setNewMoodCategory('');
@@ -30,9 +29,10 @@ const Settings = ({
     }
   };
 
-  const handleSaveName = () => {
+  const handleSaveSettings = (e) => {
+    if (e) e.preventDefault(); // Prevent default form submission
     localStorage.setItem('userName', userName);
-    toast.success('Name saved successfully!');
+    toast.success('Settings saved successfully!');
     if (onClose) onClose(); // Only call onClose if it exists (i.e., in modal mode)
   };
 
@@ -46,109 +46,121 @@ const Settings = ({
   const SettingsContent = () => (
     <>
       {/* Tab Navigation */}
-      <div className="flex mb-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="flex mb-4 border-b border-gray-700">
         <button 
           onClick={() => setActiveTab('appearance')}
           className={`pb-2 px-4 ${activeTab === 'appearance' 
-            ? `border-b-2 ${darkMode ? 'border-emerald-500 text-emerald-400' : 'border-orange-500 text-orange-500'}`
-            : 'text-gray-500 dark:text-gray-400'}`}
+            ? 'border-b-2 border-emerald-500 text-emerald-400'
+            : 'text-gray-400'}`}
         >
-          Theme
+          Profile
         </button>
         <button 
           onClick={() => setActiveTab('moods')}
           className={`pb-2 px-4 ${activeTab === 'moods' 
-            ? `border-b-2 ${darkMode ? 'border-emerald-500 text-emerald-400' : 'border-orange-500 text-orange-500'}`
-            : 'text-gray-500 dark:text-gray-400'}`}
+            ? 'border-b-2 border-emerald-500 text-emerald-400'
+            : 'text-gray-400'}`}
         >
           Custom Moods
         </button>
       </div>
       
-      {/* Theme settings */}
+      {/* Profile settings (previously theme settings) */}
       {activeTab === 'appearance' && (
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Theme Mode
-          </label>
-          <button
-            onClick={toggleDarkMode}
-            className="flex items-center justify-between w-full px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700"
-          >
-            <div className="flex items-center">
-              {darkMode ? (
-                <span className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                  </svg>
-                  Dark Mode
-                </span>
-              ) : (
-                <span className="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                  Light Mode
-                </span>
-              )}
+        <form onSubmit={handleSaveSettings} className="mb-4">
+          {userName ? (
+            <div className="px-3 py-4 rounded-md border border-gray-700 mb-4">
+              <h3 className="text-xl font-medium text-emerald-400 mb-2">
+                Hello, {userName}
+              </h3>
+              <p className="text-sm text-gray-400 mb-3">
+                You can change your name below if you'd like:
+              </p>
+              <div className="mt-3">
+                <label htmlFor="userName" className="sr-only">Your Name</label>
+                <input
+                  type="text"
+                  id="userName"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Enter your name"
+                  className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                />
+              </div>
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                >
+                  Update Name
+                </button>
+              </div>
             </div>
-            <div className={`w-10 h-5 ${darkMode ? 'bg-emerald-600' : 'bg-orange-500'} rounded-full relative transition-colors`}>
-              <span className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform ${darkMode ? 'translate-x-5' : ''}`}></span>
+          ) : (
+            <div className="mb-4">
+              <label htmlFor="userName" className="block text-sm font-medium text-gray-300 mb-2">
+                Your Name
+              </label>
+              <input
+                type="text"
+                id="userName"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Enter your name"
+                className="w-full p-3 border border-gray-600 rounded-lg bg-gray-700 text-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+              />
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                >
+                  Save Name
+                </button>
+              </div>
             </div>
-          </button>
-          
-          <div className="mt-4">
-            <label htmlFor="userName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Your Name
-            </label>
-            <input
-              type="text"
-              id="userName"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              placeholder="Enter your name"
-              className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-            />
-          </div>
-        </div>
+          )}
+        </form>
       )}
       
       {/* Custom moods settings */}
       {activeTab === 'moods' && (
         <div className="mb-4">
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <form onSubmit={handleAddMoodCategory} className="mb-4">
+            <label htmlFor="newMoodCategory" className="block text-sm font-medium text-gray-300 mb-2">
               Add Custom Mood
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
+                id="newMoodCategory"
                 value={newMoodCategory}
                 onChange={(e) => setNewMoodCategory(e.target.value)}
                 placeholder="E.g., Excited, Nostalgic..."
-                className="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                className="flex-1 p-3 border border-gray-600 rounded-lg bg-gray-700 text-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
               />
               <button
-                onClick={handleAddMoodCategory}
-                className={`px-3 py-2 rounded text-white ${darkMode ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-orange-500 hover:bg-orange-600'}`}
+                type="submit"
+                className="px-4 py-3 rounded text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800"
               >
                 Add
               </button>
             </div>
-          </div>
+          </form>
           
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-300 mb-2">
             Current Custom Moods
           </label>
-          <div className="max-h-32 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
+          <div className="max-h-60 overflow-y-auto p-3 border border-gray-700 rounded-lg bg-gray-800">
             {customMoodCategories.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {customMoodCategories.map((category) => (
-                  <div key={category} className="flex items-center bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
-                    <span className="text-sm text-gray-800 dark:text-gray-200">{category}</span>
+                  <div key={category} className="flex items-center bg-gray-700 px-3 py-2 rounded-full">
+                    <span className="text-sm text-gray-200">{category}</span>
                     <button
+                      type="button"
                       onClick={() => onRemoveCustomMood(category)}
-                      className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+                      className="ml-2 text-gray-400 hover:text-red-400 focus:outline-none focus:text-red-400"
+                      aria-label={`Remove ${category}`}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -158,7 +170,7 @@ const Settings = ({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+              <p className="text-sm text-gray-400 text-center py-4">
                 No custom moods added yet.
               </p>
             )}
@@ -176,16 +188,17 @@ const Settings = ({
         onClick={onClose} // Close when clicking outside
       >
         <div 
-          className={`w-full max-w-md rounded-xl shadow-xl overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
+          className="w-full max-w-md rounded-xl shadow-xl overflow-hidden bg-gray-800"
           onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
         >
-          <div className="p-5 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
-            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+          <div className="p-5 flex justify-between items-center border-b border-gray-700">
+            <h2 className="text-xl font-bold text-white">
               Settings
             </h2>
             <button 
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-gray-400 hover:text-gray-200 focus:outline-none focus:text-gray-200"
+              aria-label="Close settings"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -197,18 +210,12 @@ const Settings = ({
             <SettingsContent />
           </div>
           
-          <div className="p-5 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-2">
+          <div className="p-5 border-t border-gray-700 flex justify-end space-x-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+              className="px-4 py-2 border border-gray-600 rounded text-gray-300 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-gray-500"
             >
-              Cancel
-            </button>
-            <button
-              onClick={handleSaveName}
-              className={`px-4 py-2 text-white rounded hover:bg-opacity-90 ${darkMode ? 'bg-emerald-600' : 'bg-orange-500'}`}
-            >
-              Save
+              Close
             </button>
           </div>
         </div>
@@ -218,21 +225,12 @@ const Settings = ({
 
   // For page view
   return (
-    <div className={`rounded-xl shadow-md p-6 ${darkMode ? 'bg-gray-800' : 'bg-white'} border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-      <h2 className={`text-xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+    <div className="rounded-xl shadow-md p-6 bg-gray-800 border border-gray-700">
+      <h2 className="text-xl font-bold mb-6 text-white">
         Settings
       </h2>
       
       <SettingsContent />
-
-      <div className="flex justify-end mt-6">
-        <button
-          onClick={handleSaveName}
-          className={`px-4 py-2 text-white rounded hover:bg-opacity-90 ${darkMode ? 'bg-emerald-600' : 'bg-orange-500'}`}
-        >
-          Save
-        </button>
-      </div>
     </div>
   );
 };

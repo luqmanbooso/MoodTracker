@@ -16,20 +16,32 @@ export const getMoods = async (req, res) => {
 export const createMood = async (req, res) => {
   try {
     console.log('Creating mood:', req.body);
-    const { mood, intensity, note, activities } = req.body;
+    const { mood, customMood, intensity, note, activities, tags } = req.body;
+    
+    // Validate required fields
+    if (!mood) {
+      return res.status(400).json({ message: 'Mood is required' });
+    }
+    
+    if (!intensity || intensity < 1 || intensity > 10) {
+      return res.status(400).json({ message: 'Valid intensity (1-10) is required' });
+    }
     
     const newMood = new Mood({
       mood,
+      customMood: customMood || '',
       intensity,
-      note,
-      activities
+      note: note || '',
+      activities: activities || [],
+      tags: tags || []
     });
 
     const savedMood = await newMood.save();
+    console.log('Mood saved successfully:', savedMood);
     res.json(savedMood);
   } catch (err) {
     console.error('Error in createMood controller:', err.message);
-    res.status(500).json({ message: 'Server Error' });
+    res.status(500).json({ message: 'Server Error', error: err.message });
   }
 };
 
