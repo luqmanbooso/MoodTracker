@@ -84,7 +84,7 @@ const VoiceMoodAIModal = ({ transcript, detectedMood, detectedCustomMood, onClos
         <div className="bg-gray-800 p-4 flex justify-between items-center">
           <h2 className="text-xl font-bold text-white flex items-center">
             <span className="text-2xl mr-2">{getMoodEmoji()}</span>
-            Mindset Coach
+            AI Wellness Coach
           </h2>
           <button 
             onClick={onClose}

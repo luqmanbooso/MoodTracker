@@ -8,7 +8,28 @@ const pointHistorySchema = new mongoose.Schema({
   reason: {
     type: String,
     required: true,
-    enum: ['mood_entry', 'challenge_complete', 'habit_complete', 'goal_progress', 'goal_complete', 'streak', 'resource_complete', 'achievement']
+    enum: [
+      'mood_entry', 
+      'challenge_complete', 
+      'habit_complete', 
+      'goal_progress', 
+      'goal_complete', 
+      'streak', 
+      'resource_complete', 
+      'achievement',
+      'wellness_check_in',
+      'wellness_insight',
+      'self_care_activity',
+      'mental_health_goal',
+      'stress_management',
+      'mindfulness_practice',
+      'emotional_awareness',
+      'positive_habit',
+      'wellness_reflection',
+      'coping_strategy',
+      'social_connection',
+      'physical_wellness'
+    ]
   },
   description: {
     type: String,

@@ -135,3 +135,74 @@ export const getActivities = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+// Get user achievements
+export const getAchievements = async (req, res) => {
+  try {
+    const defaultUserId = '000000000000000000000000';
+    const progress = await Progress.findOne({ user: defaultUserId });
+    
+    if (!progress) {
+      return res.json([]);
+    }
+    
+    // Generate achievements based on progress
+    const achievements = [];
+    
+    // Mood entry achievements
+    if (progress.moodEntryCount >= 1) achievements.push({ id: 'first_mood', name: 'First Entry', description: 'Logged your first mood', earned: true });
+    if (progress.moodEntryCount >= 7) achievements.push({ id: 'week_streak', name: 'Week Warrior', description: 'Logged moods for 7 days', earned: true });
+    if (progress.moodEntryCount >= 30) achievements.push({ id: 'month_master', name: 'Month Master', description: 'Logged moods for 30 days', earned: true });
+    
+    // Level achievements
+    if (progress.level >= 2) achievements.push({ id: 'level_2', name: 'Getting Started', description: 'Reached level 2', earned: true });
+    if (progress.level >= 5) achievements.push({ id: 'level_5', name: 'Halfway There', description: 'Reached level 5', earned: true });
+    if (progress.level >= 10) achievements.push({ id: 'level_10', name: 'Master Tracker', description: 'Reached level 10', earned: true });
+    
+    // Streak achievements
+    if (progress.currentStreak >= 3) achievements.push({ id: 'streak_3', name: 'Consistent', description: '3-day mood streak', earned: true });
+    if (progress.currentStreak >= 7) achievements.push({ id: 'streak_7', name: 'Dedicated', description: '7-day mood streak', earned: true });
+    if (progress.longestStreak >= 14) achievements.push({ id: 'streak_14', name: 'Unstoppable', description: '14-day mood streak', earned: true });
+    
+    res.json(achievements);
+  } catch (error) {
+    console.error('Error getting achievements:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get user stats
+export const getStats = async (req, res) => {
+  try {
+    const defaultUserId = '000000000000000000000000';
+    const progress = await Progress.findOne({ user: defaultUserId });
+    
+    if (!progress) {
+      return res.json({
+        totalMoodEntries: 0,
+        averageMoodScore: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        totalPoints: 0,
+        level: 1,
+        completionRate: 0
+      });
+    }
+    
+    // Calculate stats
+    const stats = {
+      totalMoodEntries: progress.moodEntryCount,
+      averageMoodScore: progress.moodEntryCount > 0 ? Math.round(progress.points / progress.moodEntryCount) : 0,
+      currentStreak: progress.currentStreak,
+      longestStreak: progress.longestStreak,
+      totalPoints: progress.points,
+      level: progress.level,
+      completionRate: progress.moodEntryCount > 0 ? Math.round((progress.moodEntryCount / (progress.moodEntryCount + 10)) * 100) : 0
+    };
+    
+    res.json(stats);
+  } catch (error) {
+    console.error('Error getting stats:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};

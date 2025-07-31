@@ -89,12 +89,19 @@ export const getStats = async () => {
 /**
  * Get user's recent activities
  */
-export const getRecentActivities = async () => {
+export const getActivities = async () => {
   try {
     const response = await axios.get(`${API_URL}/activities`);
     return response.data;
   } catch (error) {
-    console.error('Error getting recent activities:', error);
+    console.error('Error getting activities:', error);
     return []; // Return empty array to prevent UI errors
   }
+};
+
+/**
+ * Get user's recent activities (alias for backward compatibility)
+ */
+export const getRecentActivities = async () => {
+  return getActivities();
 };

@@ -8,7 +8,7 @@ const EnhancedMoodAssistant = ({ moods = [], habits = [], goals = [], pointsSyst
     { 
       id: 1, 
       type: 'assistant', 
-      text: "I'm your Mindset Coach. No bullshit, just straight talk to help you improve. How are you really doing today?",
+      text: "I'm your AI Wellness Coach. I'm here to examine your wellness patterns and create personalized plans. How are you really doing today?",
       timestamp: new Date()
     }
   ]);
@@ -216,7 +216,7 @@ const EnhancedMoodAssistant = ({ moods = [], habits = [], goals = [], pointsSyst
             </svg>
           </div>
           <div>
-            <h2 className="font-bold text-2xl">Mindset Coach</h2>
+            <h2 className="font-bold text-2xl">AI Wellness Coach</h2>
             <p className="text-sm opacity-90">Straight talk, no excuses</p>
           </div>
         </div>

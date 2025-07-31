@@ -1,54 +1,48 @@
 import { useState, useEffect } from 'react';
-import { useTheme } from '../context/ThemeContext';
+import { getDailyQuote } from '../services/api';
 
-const DailyQuote = () => {
-  const { theme } = useTheme();
+const DailyQuote = ({ compact = false }) => {
   const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  // Local quotes as fallback
-  const getLocalQuote = () => {
-    const quotes = [
-      {
-        content: "Discipline equals freedom.",
-        author: "Jocko Willink"
-      },
-      {
-        content: "We are what we repeatedly do. Excellence, then, is not an act, but a habit.",
-        author: "Aristotle"
-      },
-      {
-        content: "Hard choices, easy life. Easy choices, hard life.",
-        author: "Jerzy Gregory"
-      },
-      {
-        content: "You don't rise to the level of your goals, you fall to the level of your systems.",
-        author: "James Clear"
-      },
-      {
-        content: "The pain of discipline is far less than the pain of regret.",
-        author: "Jim Rohn"
-      },
-      {
-        content: "Do what you have to do until you can do what you want to do.",
-        author: "Denzel Washington"
-      }
-    ];
-    
-    // Get quote based on the day of the month
-    const dayOfMonth = new Date().getDate();
-    return quotes[dayOfMonth % quotes.length];
-  };
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchQuote = async () => {
       try {
-        // Always use local quotes instead of trying the remote API that has CORS issues
-        setQuote(getLocalQuote());
-        setLoading(false);
+        setLoading(true);
+        setError(null);
+        
+        // Check if we have a cached quote for today
+        const today = new Date().toDateString();
+        const cachedQuote = localStorage.getItem('dailyQuote');
+        const cachedData = cachedQuote ? JSON.parse(cachedQuote) : null;
+        
+        if (cachedData && cachedData.date === today) {
+          setQuote(cachedData.quote);
+          setLoading(false);
+          return;
+        }
+
+        // Fetch new quote from API
+        const quoteData = await getDailyQuote();
+        
+        // Cache the quote for today
+        localStorage.setItem('dailyQuote', JSON.stringify({
+          quote: quoteData,
+          date: today
+        }));
+        
+        setQuote(quoteData);
       } catch (err) {
         console.error('Error fetching quote:', err);
-        setQuote(getLocalQuote());
+        setError('Failed to load daily inspiration');
+        
+        // Fallback to a default quote
+        setQuote({
+          content: "Every day is a new opportunity to improve yourself.",
+          author: "Unknown"
+        });
+      } finally {
         setLoading(false);
       }
     };
@@ -58,22 +52,41 @@ const DailyQuote = () => {
 
   if (loading) {
     return (
-      <div className={`${theme.cardBg} rounded-lg shadow-md p-6 animate-pulse`}>
-        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2.5"></div>
-        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+      <div className="animate-pulse">
+        <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+        <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-gray-400 text-sm">
+        {error}
+      </div>
+    );
+  }
+
+  if (compact) {
+    return (
+      <div className="space-y-2">
+        <blockquote className="text-sm font-medium text-gray-200 leading-relaxed">
+          "{quote?.content}"
+        </blockquote>
+        <cite className="block text-xs text-gray-400">— {quote?.author}</cite>
       </div>
     );
   }
 
   return (
-    <div className={`${theme.cardBg} rounded-lg shadow-md p-6`}>
+    <div className="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
       <div className="flex items-start">
         <div className="text-3xl mr-4">💭</div>
-        <div>
-          <blockquote className="text-lg font-medium italic text-gray-700">
+        <div className="flex-1">
+          <blockquote className="text-lg font-medium italic text-gray-200 leading-relaxed">
             "{quote?.content}"
           </blockquote>
-          <cite className="block text-gray-500 mt-2">— {quote?.author}</cite>
+          <cite className="block text-gray-400 mt-3 font-medium">— {quote?.author}</cite>
         </div>
       </div>
     </div>

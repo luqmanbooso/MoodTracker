@@ -1,429 +1,511 @@
-import { useState, useRef, useEffect } from 'react';
-import { useTheme } from '../context/ThemeContext';
-import { getAIResponse } from '../services/aiService';
+import React, { useState, useRef, useEffect } from 'react';
+import aiService from '../services/aiService.js';
 
-const MoodAssistant = ({ 
-  moods = [], 
-  habits = [], 
-  goals = [], 
-  pointsSystem, 
-  setView,
-  expanded = false,
-  fullPage = false
-}) => {
-  // Remove theme conditionals
-  const [messages, setMessages] = useState([
-    { 
-      id: 1, 
-      type: 'assistant', 
-      text: "Hello! How are you really feeling today?",
-      timestamp: new Date()
-    }
-  ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [error, setError] = useState(null);
-  const [aiStatus, setAiStatus] = useState('active'); // Always set to 'active'
-  const [aiSource, setAiSource] = useState('openrouter'); // Always use 'openrouter'
+const MoodAssistant = ({ moods, habits, goals, setView, expanded = false, fullPage = false }) => {
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [needsIntervention, setNeedsIntervention] = useState(false);
+  const [interactionCount, setInteractionCount] = useState(0);
+  const [canExit, setCanExit] = useState(false);
+  const [userWellnessScore, setUserWellnessScore] = useState(0);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Fixed styling for dark theme
-  const styles = {
-    primaryColor: 'emerald',
-    assistantBg: 'bg-gray-800',
-    assistantBorder: 'border-gray-700',
-    messageUser: 'bg-emerald-500/20 text-white',
-    messageBot: 'bg-gray-700 text-white',
-    inputBg: 'bg-gray-700 text-white',
-    headerText: 'text-white',
-    buttonPrimary: 'bg-emerald-500 hover:bg-emerald-600',
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
+    scrollToBottom();
   }, [messages]);
 
-  // Get current mood status
-  const getCurrentMoodState = () => {
-    if (moods.length === 0) return null;
-    
-    const recentMoods = moods.slice(0, 5);
-    const moodCounts = {
-      'Great': 0,
-      'Good': 0,
-      'Okay': 0,
-      'Bad': 0,
-      'Terrible': 0
-    };
-    
-    recentMoods.forEach(mood => {
-      if (moodCounts[mood.mood] !== undefined) {
-        moodCounts[mood.mood]++;
-      }
-    });
-    
-    // Get most frequent mood
-    let mostFrequentMood = 'Okay';
-    let highestCount = 0;
-    
-    for (const [mood, count] of Object.entries(moodCounts)) {
-      if (count > highestCount) {
-        highestCount = count;
-        mostFrequentMood = mood;
-      }
-    }
-    
-    // Get trending direction
-    const isImproving = 
-      (moods[0]?.mood === 'Great' || moods[0]?.mood === 'Good') && 
-      (moods[1]?.mood === 'Okay' || moods[1]?.mood === 'Bad' || moods[1]?.mood === 'Terrible');
-    
-    const isWorsening = 
-      (moods[0]?.mood === 'Bad' || moods[0]?.mood === 'Terrible') && 
-      (moods[1]?.mood === 'Okay' || moods[1]?.mood === 'Good' || moods[1]?.mood === 'Great');
-      
-    return {
-      currentMood: moods[0]?.mood || 'Unknown',
-      dominantMood: mostFrequentMood,
-      isImproving,
-      isWorsening,
-      hasMoods: true
-    };
-  };
+  // Calculate wellness score and check for intervention
+  useEffect(() => {
+    if (moods && moods.length > 0) {
+      const recentMoods = moods.slice(0, 7);
+      const moodScores = { thriving: 5, good: 4, neutral: 3, struggling: 2, overwhelmed: 1 };
+      const avgScore = recentMoods.reduce((sum, mood) => 
+        sum + (moodScores[mood.mood] || 3), 0
+      ) / recentMoods.length;
 
-  // Get habit status
-  const getHabitStatus = () => {
-    if (!habits || habits.length === 0) {
-      return { hasHabits: false };
-    }
-    
-    const completedToday = habits.filter(h => h.completed).length;
-    const completionRate = habits.length > 0 ? Math.round((completedToday / habits.length) * 100) : 0;
-    const incompleteHabits = habits.filter(h => !h.completed).map(h => h.name);
-    
-    return {
-      hasHabits: true,
-      totalHabits: habits.length,
-      completedToday,
-      completionRate,
-      incompleteHabits
-    };
-  };
+      setUserWellnessScore(avgScore);
 
-  // Get goal status
-  const getGoalStatus = () => {
-    if (!goals || goals.length === 0) {
-      return { hasGoals: false };
-    }
-    
-    const nearestGoal = goals.find(g => !g.completed);
-    const goalProgress = goals.length > 0 ? 
-      goals.reduce((sum, goal) => sum + (goal.progress || 0), 0) / goals.length : 0;
-    
-    return {
-      hasGoals: true,
-      totalGoals: goals.length,
-      completedGoals: goals.filter(g => g.completed).length,
-      goalProgress,
-      nearestGoal
-    };
-  };
-
-  // Process user message and generate response
-  const processMessage = async (userMessage) => {
-    try {
-      setIsTyping(true);
-      setError(null);
-      
-      // Add user message to chat
-      const userMsg = {
-        id: messages.length + 1,
-        type: 'user',
-        text: userMessage,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, userMsg]);
-      
-      // Prepare context data for the AI
-      const contextData = {
-        moods: moods.slice(0, 5).map(mood => ({
-          mood: mood.mood,
-          date: mood.date,
-          activities: mood.activities?.join(', ') || '',
-          tags: mood.tags?.join(', ') || '',
-          intensity: mood.intensity
-        })),
-        habits: habits.map(habit => ({
-          name: habit.name,
-          category: habit.category,
-          completed: habit.completed,
-          streak: habit.streak
-        })),
-        goals: goals.map(goal => ({
-          title: goal.title,
-          progress: goal.progress,
-          completed: goal.completed
-        }))
-      };
-      
-      // Use the AI service to get a response
-      const aiResponse = await getAIResponse(userMessage, contextData);
-      
-      // Update AI source for the status indicator
-      if (aiResponse.source) {
-        setAiSource(aiResponse.source);
-      }
-      
-      if (aiResponse.error) {
-        setError(aiResponse.details || 'Error connecting to OpenAI');
+      if (avgScore < 5 && messages.length === 0) {
+        setNeedsIntervention(true);
+        setCanExit(false);
+        setInteractionCount(0);
         
-        // Add error message to chat showing the actual error
-        const errorMsg = {
-          id: messages.length + 2,
-          type: 'assistant',
-          text: aiResponse.response + (aiResponse.details ? `\n\nError details: ${aiResponse.details}` : ''),
-          timestamp: new Date(),
-          isError: true,
-          source: 'error'
+        // Generate personalized intervention message based on actual data
+        const generateInterventionMessage = async () => {
+          try {
+            const userContext = {
+              moods: moods || [],
+              habits: habits || [],
+              goals: goals || [],
+              wellnessScore: avgScore,
+              recentActivity: moods ? moods.slice(0, 5) : []
+            };
+
+            const response = await aiService.generateWellnessResponse(
+              "I'm having a difficult time and need support. Can you help me understand what's happening and create a plan?", 
+              userContext
+            );
+
+            const interventionMsg = {
+              id: Date.now(),
+              type: 'assistant',
+              content: response.response || `I can see you're going through a challenging time. Your wellness score is ${avgScore.toFixed(1)}/5, and I want to help you create a personalized support plan. 
+
+Let's work together to understand what's happening and develop strategies that work for you. I'm here to listen and support you through this.
+
+What would you like to talk about first?`,
+              suggestions: response.suggestions || ['Tell me about my patterns', 'Help me with coping strategies', 'Create a wellness plan', 'I need immediate support']
+            };
+            setMessages([interventionMsg]);
+          } catch (error) {
+            console.error('Error generating intervention message:', error);
+            const fallbackMsg = {
+              id: Date.now(),
+              type: 'assistant',
+              content: `I can see you're going through a challenging time. Your wellness score is ${avgScore.toFixed(1)}/5, and I want to help you create a personalized support plan. 
+
+Let's work together to understand what's happening and develop strategies that work for you. I'm here to listen and support you through this.
+
+What would you like to talk about first?`,
+              suggestions: ['Tell me about my patterns', 'Help me with coping strategies', 'Create a wellness plan', 'I need immediate support']
+            };
+            setMessages([fallbackMsg]);
+          }
         };
-        
-        setMessages(prev => [...prev, errorMsg]);
-        setAiStatus('offline');
-      } else {
-        // Add AI response to chat
-        const assistantMsg = {
-          id: messages.length + 2,
-          type: 'assistant',
-          text: aiResponse.response,
-          timestamp: new Date(),
-          action: aiResponse.action,
-          source: aiResponse.source
-        };
-        
-        setMessages(prev => [...prev, assistantMsg]);
-        setAiStatus('active');
-      }
-      
-    } catch (err) {
-      console.error('Error processing message:', err);
-      setError('Failed to get response: ' + err.message);
-      
-      // Add error message to chat
-      const errorMsg = {
-        id: messages.length + 2,
-        type: 'assistant',
-        text: "Error: " + err.message,
-        timestamp: new Date(),
-        isError: true,
-        source: 'error'
-      };
-      
-      setMessages(prev => [...prev, errorMsg]);
-      setAiStatus('offline');
-      
-    } finally {
-      setIsTyping(false);
-    }
-  };
 
-  // Modify handleSubmit around line 225
+        generateInterventionMessage();
+      }
+    }
+  }, [moods]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!inputMessage.trim() || isLoading) return;
+
+    const userMessage = inputMessage.trim();
+    setInputMessage('');
     
-    if (!input.trim() || isTyping) return;
-    
-    const userMessage = input;
-    setInput('');
-    setIsTyping(true);
-    setError(null);
-    
-    // Add user message to chat
     const userMsg = {
       id: Date.now(),
       type: 'user',
-      text: userMessage,
-      timestamp: new Date()
+      content: userMessage
     };
-    
-    setMessages(prevMessages => [...prevMessages, userMsg]);
-    
+    setMessages(prev => [...prev, userMsg]);
+    setIsLoading(true);
+    setInteractionCount(prev => prev + 1);
+
     try {
-      // Get AI response with context
-      const aiResponse = await getAIResponse(userMessage, {
-        moods: moods.slice(0, 5), // Send recent moods
-        habits: habits, 
-        goals: goals
-      });
+      const userContext = {
+        moods: moods || [],
+        habits: habits || [],
+        goals: goals || [],
+        wellnessScore: userWellnessScore,
+        interactionCount: interactionCount + 1,
+        needsIntervention: needsIntervention,
+        recentActivity: moods ? moods.slice(0, 5) : []
+      };
+
+      const response = await aiService.generateWellnessResponse(userMessage, userContext);
       
-      console.log('Raw AI Response received:', JSON.stringify(aiResponse));
+      if (response.needsIntervention) {
+        setNeedsIntervention(true);
+      }
       
-      // Add AI message to chat - use exactly what comes from backend
-      const aiMsg = {
+      const assistantMsg = {
         id: Date.now() + 1,
         type: 'assistant',
-        text: aiResponse.message, // This should be the raw Claude response
-        action: aiResponse.action,
-        timestamp: new Date(),
-        isError: false
+        content: response.response,
+        suggestions: response.suggestions || []
       };
       
-      console.log('Constructed message object:', JSON.stringify(aiMsg));
-      
-      setMessages(prevMessages => [...prevMessages, aiMsg]);
-      setAiSource('openrouter');
-      setAiStatus('active');
-      
-      // Award points for engaging with the AI coach
-      if (pointsSystem) {
-        pointsSystem.awardPoints('CHAT_WITH_COACH');
+      setMessages(prev => [...prev, assistantMsg]);
+
+      // Check if user can exit after 5 interactions
+      if (interactionCount + 1 >= 5 && needsIntervention) {
+        setCanExit(true);
       }
-    } catch (err) {
-      console.error('Error getting AI response:', err);
-      setError('Connection error. Please try again in a moment.');
-      
-      // Add error message
+    } catch (error) {
+      console.error('Error getting AI response:', error);
       const errorMsg = {
         id: Date.now() + 1,
         type: 'assistant',
-        text: 'Sorry, I\'m having trouble connecting right now. Please try again in a moment.',
-        timestamp: new Date(),
-        isError: true
+        content: "I'm having trouble connecting right now. Please try again in a moment.",
+        suggestions: ['Try again', 'Ask about stress management', 'Get mood insights']
       };
-      
-      setMessages(prevMessages => [...prevMessages, errorMsg]);
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
-      setIsTyping(false);
-      // Focus input field again
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
+      setIsLoading(false);
     }
   };
 
-  const handleActionClick = (action) => {
-    if (action && setView) {
-      if (action === 'habits' || action === 'goals') {
-        setView('progress');
-      } else {
-        setView(action);
-      }
+  const handleSuggestionClick = (suggestion) => {
+    setInputMessage(suggestion);
+  };
+
+  const handleQuickAction = (action) => {
+    switch(action) {
+      case 'stress':
+        setInputMessage("I'm feeling stressed and overwhelmed. Can you help me with some immediate coping strategies?");
+        break;
+      case 'sleep':
+        setInputMessage("I'm having trouble sleeping. What can I do to improve my sleep quality?");
+        break;
+      case 'motivation':
+        setInputMessage("I'm struggling with motivation and feeling stuck. How can I get back on track?");
+        break;
+      case 'anxiety':
+        setInputMessage("I'm experiencing anxiety and worry. Can you help me manage these feelings?");
+        break;
+      case 'depression':
+        setInputMessage("I'm feeling down and hopeless. What can I do to improve my mood?");
+        break;
+      case 'insights':
+        setView('insights');
+        break;
+      default:
+        setInputMessage(action);
     }
   };
 
-  return (
-    <div className={`
-      ${fullPage ? 'h-full' : expanded ? 'fixed bottom-0 right-0 w-full md:w-96 h-[70vh] z-50' : 'h-[480px]'} 
-      ${styles.assistantBg} ${styles.assistantBorder} rounded-lg shadow-xl overflow-hidden transition-all duration-300 flex flex-col
-    `}>
-      {/* Header */}
-      <div className="bg-emerald-700 text-white p-4 flex justify-between items-center">
-        <div className="flex items-center">
-          <div className="bg-white rounded-full p-1 mr-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-${styles.primaryColor}-700`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="font-bold text-lg">Mindset Coach</h3>
-            <p className="text-xs opacity-80">Straight talk, no excuses</p>
+  const handleTopicClick = (topic) => {
+    const topicMessages = {
+      'stress': "I'm feeling stressed and overwhelmed. Can you help me with some immediate coping strategies?",
+      'sleep': "I'm having trouble sleeping. What can I do to improve my sleep quality?",
+      'motivation': "I'm struggling with motivation and feeling stuck. How can I get back on track?",
+      'anxiety': "I'm experiencing anxiety and worry. Can you help me manage these feelings?",
+      'depression': "I'm feeling down and hopeless. What can I do to improve my mood?",
+      'relationships': "I'm having relationship issues. Can you help me navigate this?",
+      'work': "I'm struggling with work-related stress. How can I manage this better?",
+      'self-care': "I need help with self-care. What activities would be good for me right now?"
+    };
+    
+    setInputMessage(topicMessages[topic] || topic);
+  };
+
+  const handleExit = () => {
+    if (needsIntervention && !canExit) {
+      const exitMsg = {
+        id: Date.now(),
+        type: 'assistant',
+        content: `I understand you might want to step away, but I'm concerned about your wellness right now. We've only had ${interactionCount} interactions, and I'd really like to help you create a support plan. 
+
+Could we continue for just a few more minutes? Your mental health is important, and I want to make sure you have the tools you need.`,
+        suggestions: ['Continue talking', 'Tell me about my patterns', 'Help me with coping strategies']
+      };
+      setMessages(prev => [...prev, exitMsg]);
+      return;
+    }
+    
+    setView('dashboard');
+  };
+
+  // Full page layout
+  if (fullPage) {
+    return (
+      <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        {/* Header */}
+        <div className="flex-shrink-0 p-6 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <div className="w-4 h-4 bg-emerald-400 rounded-full animate-pulse"></div>
+                <div className="absolute inset-0 w-4 h-4 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">AI Wellness Coach</h2>
+                <p className="text-sm text-slate-400">
+                  {needsIntervention ? 'Your wellness ally - here to help' : 'Your personal mental health companion'}
+                </p>
+              </div>
+              {needsIntervention && (
+                <div className="flex items-center space-x-2 bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-1">
+                  <span className="text-amber-400 text-sm">
+                    ⚠️ Intervention Active ({interactionCount}/5)
+                  </span>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleExit}
+              className={`p-2 rounded-xl transition-all duration-200 ${
+                needsIntervention && !canExit 
+                  ? 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/20' 
+                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+              }`}
+              title={needsIntervention && !canExit ? `Complete ${5 - interactionCount} more interactions to exit` : 'Exit chat'}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
-        
-        {!fullPage && (
-          <button 
-            onClick={() => setExpanded(!expanded)}
-            className="text-white p-1 hover:bg-white hover:bg-opacity-20 rounded"
-          >
-            {expanded ? (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414-1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-              </svg>
-            )}
-          </button>
-        )}
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex">
+          {/* Chat Area */}
+          <div className="flex-1 flex flex-col">
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              {messages.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center text-slate-400">
+                    <div className="text-6xl mb-4">💬</div>
+                    <h3 className="text-lg font-medium text-white mb-2">Start a conversation</h3>
+                    <p className="text-sm">Ask me anything about your wellness journey</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6 pb-4">
+                  {messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div
+                        className={`max-w-2xl px-6 py-4 rounded-2xl shadow-lg ${
+                          message.type === 'user'
+                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
+                            : 'bg-slate-700/50 backdrop-blur-sm text-slate-100 border border-slate-600/50'
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap leading-relaxed text-base">{message.content}</p>
+                        {message.suggestions && message.suggestions.length > 0 && (
+                          <div className="mt-4 space-y-2">
+                            {message.suggestions.map((suggestion, index) => (
+                              <button
+                                key={index}
+                                onClick={() => handleSuggestionClick(suggestion)}
+                                className="block w-full text-left text-sm bg-slate-600/50 hover:bg-slate-500/50 rounded-xl px-4 py-2 transition-all duration-200 hover:scale-105"
+                              >
+                                {suggestion}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {isLoading && (
+                    <div className="flex justify-start">
+                      <div className="bg-slate-700/50 backdrop-blur-sm text-slate-100 px-6 py-4 rounded-2xl border border-slate-600/50">
+                        <div className="flex items-center space-x-3">
+                          <div className="flex space-x-1">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce"></div>
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                          <span className="text-sm">AI is thinking...</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              <div ref={messagesEndRef} className="pb-4" />
+            </div>
+
+            {/* Input Area */}
+            <div className="flex-shrink-0 p-6 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+              <form onSubmit={handleSubmit} className="flex space-x-4">
+                <div className="flex-1 relative">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    placeholder={needsIntervention ? "I'm here to help - what do you need?" : "Ask me anything about your wellness..."}
+                    className="w-full px-6 py-4 bg-slate-700/50 border border-slate-600/50 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all duration-200 backdrop-blur-sm"
+                    disabled={isLoading}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={!inputMessage.trim() || isLoading}
+                  className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium rounded-2xl transition-all duration-200 hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Sidebar - Only show when no messages */}
+          {messages.length === 0 && (
+            <div className="w-80 border-l border-slate-700/50 bg-slate-800/20 backdrop-blur-sm overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              {/* Quick Actions */}
+              <div className="p-6">
+                <h3 className="text-sm font-semibold text-slate-300 mb-4">Quick Actions</h3>
+                <div className="space-y-3">
+                  {[
+                    { action: 'stress', label: 'Stress Relief', icon: '🧘‍♀️' },
+                    { action: 'sleep', label: 'Sleep Quality', icon: '😴' },
+                    { action: 'motivation', label: 'Motivation', icon: '🌟' },
+                    { action: 'anxiety', label: 'Anxiety', icon: '🧠' },
+                    { action: 'depression', label: 'Depression', icon: '💆‍♀️' },
+                    { action: 'insights', label: 'Get Insights', icon: '📊' }
+                  ].map((item) => (
+                    <button
+                      key={item.action}
+                      onClick={() => handleQuickAction(item.action)}
+                      className="w-full flex items-center p-4 bg-slate-700/50 hover:bg-slate-600/50 rounded-xl text-sm transition-all duration-200 hover:scale-105 border border-slate-600/30"
+                    >
+                      <span className="mr-3 text-lg">{item.icon}</span>
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Wellness Topics */}
+              <div className="p-6 border-t border-slate-700/50">
+                <h3 className="text-sm font-semibold text-slate-300 mb-4">Wellness Topics</h3>
+                <div className="space-y-3">
+                  {['stress', 'sleep', 'motivation', 'anxiety', 'depression', 'relationships', 'work', 'self-care'].map((topic) => (
+                    <button
+                      key={topic}
+                      onClick={() => handleTopicClick(topic)}
+                      className="w-full p-4 bg-slate-700/50 hover:bg-slate-600/50 rounded-xl text-left transition-all duration-200 hover:scale-105 border border-slate-600/30"
+                    >
+                      <div className="flex items-center mb-2">
+                        <span className="text-2xl mr-3">{topic === 'stress' ? '🧘‍♀️' : topic === 'sleep' ? '😴' : topic === 'motivation' ? '🌟' : topic === 'anxiety' ? '🧠' : topic === 'depression' ? '💆‍♀️' : topic === 'relationships' ? '👥' : topic === 'work' ? '💼' : '💆‍♀️'}</span>
+                        <span className="text-sm font-medium text-white">{topic.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                      </div>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        {topic === 'stress' ? 'Learn effective stress relief techniques' : topic === 'sleep' ? 'Improve your sleep and rest' : topic === 'motivation' ? 'Natural ways to lift your spirits' : topic === 'anxiety' ? 'Practice present-moment awareness' : topic === 'depression' ? 'Prioritize your wellbeing' : topic === 'relationships' ? 'Learn to navigate relationship challenges' : topic === 'work' ? 'Manage work-related stress' : 'Prioritize your wellbeing'}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-      {aiSource === 'openrouter'}
-      
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map(message => (
-          <div 
-            key={message.id} 
+    );
+  }
+
+  // Compact layout
+  const containerClass = expanded 
+    ? "h-96 flex flex-col bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700 shadow-2xl" 
+    : "h-64 flex flex-col bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700 shadow-2xl";
+
+  return (
+    <div className={containerClass}>
+      {/* Header */}
+      <div className="p-4 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
+              <div className="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-white">AI Wellness Coach</h2>
+              <p className="text-xs text-slate-400">
+                {needsIntervention ? 'Wellness ally' : 'Mental health companion'}
+              </p>
+            </div>
+            {needsIntervention && (
+              <div className="bg-amber-500/20 border border-amber-500/30 rounded px-2 py-1">
+                <span className="text-amber-400 text-xs">⚠️</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+        {messages.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-slate-400">
+              <div className="text-4xl mb-2">💬</div>
+              <p className="text-sm">Start a conversation</p>
+            </div>
+          </div>
+        )}
+        
+        {messages.map((message) => (
+          <div
+            key={message.id}
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div 
-              className={`max-w-[85%] p-3 rounded-lg ${
-                message.type === 'user' 
-                  ? styles.messageUser
-                  : message.isError 
-                    ? 'bg-red-900/30 text-red-300'
-                    : styles.messageBot
+            <div
+              className={`max-w-xs px-4 py-3 rounded-xl shadow-lg ${
+                message.type === 'user'
+                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
+                  : 'bg-slate-700/50 backdrop-blur-sm text-slate-100 border border-slate-600/50'
               }`}
             >
-              <div className="text-sm">{message.text}</div>
-              {message.action && (
-                <button
-                  onClick={() => handleActionClick(message.action)}
-                  className={`mt-2 px-3 py-1 bg-${styles.primaryColor}-700 bg-opacity-30 hover:bg-opacity-50 text-white text-xs rounded-full transition`}
-                >
-                  Go to {message.action === 'stats' ? 'insights' : message.action}
-                </button>
+              <p className="whitespace-pre-wrap leading-relaxed text-sm">{message.content}</p>
+              {message.suggestions && message.suggestions.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  {message.suggestions.slice(0, 2).map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="block w-full text-left text-xs bg-slate-600/50 hover:bg-slate-500/50 rounded-lg px-3 py-1 transition-all duration-200"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
               )}
-              <div className="text-xs mt-1 opacity-60">
-                {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </div>
             </div>
           </div>
         ))}
-        {isTyping && (
+        
+        {isLoading && (
           <div className="flex justify-start">
-            <div className={`max-w-[85%] p-3 rounded-lg ${styles.messageBot}`}>
-              <div className="flex space-x-1">
-                <div className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="h-2 w-2 rounded-full bg-white animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            <div className="bg-slate-700/50 backdrop-blur-sm text-slate-100 px-4 py-3 rounded-xl border border-slate-600/50">
+              <div className="flex items-center space-x-2">
+                <div className="flex space-x-1">
+                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce"></div>
+                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                </div>
+                <span className="text-xs">AI is thinking...</span>
               </div>
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
+        
+        <div ref={messagesEndRef} className="pb-4" />
       </div>
-      
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-700">
-        <div className="flex items-center">
+
+      {/* Input Area */}
+      <div className="p-4 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+        <form onSubmit={handleSubmit} className="flex space-x-3">
           <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Talk to your coach..."
-            className="flex-1 p-2 border rounded-l-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-gray-700 text-white border-gray-600"
             ref={inputRef}
+            type="text"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            placeholder={needsIntervention ? "I'm here to help..." : "Ask me anything..."}
+            className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all duration-200 backdrop-blur-sm text-sm"
+            disabled={isLoading}
           />
           <button
             type="submit"
-            disabled={!input.trim() || isTyping}
-            className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-r-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!inputMessage.trim() || isLoading}
+            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium rounded-xl transition-all duration-200 hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           </button>
-        </div>
-      </form>
-      {error && (
-        <div className="mx-4 my-2 p-2 bg-red-900/30 text-red-300 rounded text-sm">
-          {error}
-        </div>
-      )}
+        </form>
+      </div>
     </div>
   );
 };

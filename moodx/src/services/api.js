@@ -103,3 +103,17 @@ export const getChallengeHistory = async () => {
     throw error;
   }
 };
+
+// Quote API endpoints
+export const getDailyQuote = async () => {
+  try {
+    const response = await fetch(`${API_URL}/quotes/daily`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch daily quote: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching daily quote:', error);
+    throw error;
+  }
+};

@@ -1,25 +1,26 @@
 import { useState, useEffect } from 'react';
 import { awardPoints, getProgress } from '../services/progressApi';
 
-// Action point values
-const POINT_VALUES = {
-  LOG_MOOD: 10,
-  ADD_NOTE: 5,
-  ADD_ACTIVITIES: 5,
-  ADD_TAGS: 5,
-  COMPLETE_HABIT: 15,
-  COMPLETE_MILESTONE: 20,
-  COMPLETE_GOAL: 50,
-  COMPLETE_CHALLENGE: 25,
-  DAILY_STREAK: 10,
-  WEEKLY_STREAK: 30,
-  MONTHLY_STREAK: 100
+// Wellness-focused point values
+const WELLNESS_VALUES = {
+  LOG_MOOD: 15,           // Base wellness check-in
+  ADD_NOTE: 10,           // Self-reflection bonus
+  ADD_ACTIVITIES: 8,      // Activity awareness
+  ADD_TAGS: 5,            // Emotional awareness
+  COMPLETE_HABIT: 20,     // Healthy habit completion
+  COMPLETE_MILESTONE: 25, // Goal progress
+  COMPLETE_GOAL: 50,      // Major achievement
+  DAILY_STREAK: 15,       // Consistency bonus
+  WEEKLY_STREAK: 40,      // Weekly consistency
+  MONTHLY_STREAK: 100,    // Monthly dedication
+  WELLNESS_INSIGHT: 12,   // Understanding patterns
+  SELF_CARE_ACTIVITY: 18  // Self-care actions
 };
 
 const PointsSystem = ({ userId = 'default-user' }) => {
   const [points, setPoints] = useState(0);
-  const [level, setLevel] = useState({ level: 1, name: "Beginner" });
-  const [nextLevel, setNextLevel] = useState({ level: 2, name: "Novice", threshold: 100 });
+  const [level, setLevel] = useState({ level: 1, name: "Wellness Beginner" });
+  const [nextLevel, setNextLevel] = useState({ level: 2, name: "Wellness Explorer", threshold: 100 });
   const [pointsHistory, setPointsHistory] = useState([]);
   const [justEarned, setJustEarned] = useState(null);
   const [showAnimation, setShowAnimation] = useState(false);
@@ -59,13 +60,13 @@ const PointsSystem = ({ userId = 'default-user' }) => {
       // Set points, level
       setPoints(progressData.points);
       
-      // Determine level name based on level number
-      let levelName = "Beginner";
-      if (progressData.level >= 10) levelName = "Emotional Intelligence Expert";
-      else if (progressData.level >= 8) levelName = "Mindfulness Master";
-      else if (progressData.level >= 6) levelName = "Emotion Navigator";
-      else if (progressData.level >= 4) levelName = "Wellbeing Enthusiast";
-      else if (progressData.level >= 2) levelName = "Novice";
+      // Determine wellness level name based on level number
+      let levelName = "Wellness Beginner";
+      if (progressData.level >= 10) levelName = "Wellness Master";
+      else if (progressData.level >= 8) levelName = "Wellness Advocate";
+      else if (progressData.level >= 6) levelName = "Wellness Enthusiast";
+      else if (progressData.level >= 4) levelName = "Wellness Explorer";
+      else if (progressData.level >= 2) levelName = "Wellness Learner";
       
       setLevel({
         level: progressData.level,
@@ -76,7 +77,7 @@ const PointsSystem = ({ userId = 'default-user' }) => {
       // Calculate next level
       setNextLevel({
         level: progressData.level + 1,
-        name: "Next Level",
+        name: "Next Wellness Level",
         threshold: progressData.points + (100 - (progressData.points % 100))
       });
       
@@ -85,11 +86,11 @@ const PointsSystem = ({ userId = 'default-user' }) => {
         setPointsHistory(progressData.recentHistory);
       }
     } catch (error) {
-      console.error('Error loading points data:', error);
+      console.error('Error loading wellness data:', error);
     }
   };
 
-  // Award points for specific actions
+  // Award wellness points for specific actions
   const awardPointsForAction = async (action) => {
     // Prevent spamming by requiring at least 1 second between point awards
     const now = Date.now();
@@ -98,53 +99,57 @@ const PointsSystem = ({ userId = 'default-user' }) => {
     }
     setLastUpdateTime(now);
     
-    // Get points for this action
-    const pointsToAdd = POINT_VALUES[action] || 1;
+    // Get wellness points for this action
+    const pointsToAdd = WELLNESS_VALUES[action] || 1;
     
-    // Generate a description based on the action
-    let description = "Points earned";
-    let reason = "misc";
+    // Generate a meaningful description based on the wellness action
+    let description = "Wellness activity completed";
+    let reason = "wellness_activity";
     
     switch(action) {
       case 'LOG_MOOD': 
-        description = "Logged your mood";
-        reason = "mood_entry";
+        description = "Completed wellness check-in";
+        reason = "wellness_checkin";
         break;
       case 'ADD_NOTE': 
-        description = "Added mood details";
-        reason = "mood_entry";
+        description = "Added self-reflection";
+        reason = "self_reflection";
         break;
       case 'ADD_ACTIVITIES':
-        description = "Tracked activities";
-        reason = "mood_entry";
+        description = "Tracked wellness activities";
+        reason = "activity_awareness";
         break;
       case 'ADD_TAGS':
-        description = "Tagged your mood";
-        reason = "mood_entry"; 
+        description = "Enhanced emotional awareness";
+        reason = "emotional_awareness"; 
         break;
       case 'COMPLETE_HABIT':
-        description = "Completed a habit";
-        reason = "habit_complete";
+        description = "Completed healthy habit";
+        reason = "healthy_habit";
         break;
       case 'COMPLETE_MILESTONE':
-        description = "Reached a goal milestone";
-        reason = "goal_progress";
+        description = "Achieved wellness milestone";
+        reason = "wellness_milestone";
         break;
       case 'COMPLETE_GOAL':
-        description = "Achieved a goal";
-        reason = "goal_complete";
+        description = "Reached major wellness goal";
+        reason = "wellness_goal";
         break;
-      case 'COMPLETE_CHALLENGE':
-        description = "Completed a challenge";
-        reason = "challenge_complete";
+      case 'WELLNESS_INSIGHT':
+        description = "Gained wellness insight";
+        reason = "wellness_insight";
+        break;
+      case 'SELF_CARE_ACTIVITY':
+        description = "Completed self-care activity";
+        reason = "self_care";
         break;
       default:
-        description = "Activity completed";
-        reason = "misc";
+        description = "Wellness activity completed";
+        reason = "wellness_activity";
     }
     
     try {
-      // Call the API to award points
+      // Call the API to award wellness points
       const result = await awardPoints(pointsToAdd, reason, description);
       
       // Update local state with new data
@@ -155,12 +160,12 @@ const PointsSystem = ({ userId = 'default-user' }) => {
         setLevelUp(true);
         
         // Update level information
-        let newLevelName = "Beginner";
-        if (result.level >= 10) newLevelName = "Emotional Intelligence Expert";
-        else if (result.level >= 8) newLevelName = "Mindfulness Master";
-        else if (result.level >= 6) newLevelName = "Emotion Navigator";
-        else if (result.level >= 4) newLevelName = "Wellbeing Enthusiast";
-        else if (result.level >= 2) newLevelName = "Novice";
+        let newLevelName = "Wellness Beginner";
+        if (result.level >= 10) newLevelName = "Wellness Master";
+        else if (result.level >= 8) newLevelName = "Wellness Advocate";
+        else if (result.level >= 6) newLevelName = "Wellness Enthusiast";
+        else if (result.level >= 4) newLevelName = "Wellness Explorer";
+        else if (result.level >= 2) newLevelName = "Wellness Learner";
         
         setLevel({
           level: result.level,
@@ -171,7 +176,7 @@ const PointsSystem = ({ userId = 'default-user' }) => {
         // Update next level
         setNextLevel({
           level: result.level + 1,
-          name: "Next Level",
+          name: "Next Wellness Level",
           threshold: result.points + (100 - (result.points % 100))
         });
       }
@@ -183,12 +188,12 @@ const PointsSystem = ({ userId = 'default-user' }) => {
       return pointsToAdd;
       
     } catch (error) {
-      console.error('Error awarding points:', error);
+      console.error('Error awarding wellness points:', error);
       return 0;
     }
   };
 
-  // Calculate progress to next level
+  // Calculate progress to next wellness level
   const calculateProgress = () => {
     if (!nextLevel) return 100; // Max level reached
     
@@ -200,7 +205,7 @@ const PointsSystem = ({ userId = 'default-user' }) => {
   // Make sure you return formatted values that can be directly rendered
   return {
     points,
-    // Instead of just returning the level object
+    // Wellness level information
     level: {
       level: level.level, // Numeric value
       name: level.name,   // String value

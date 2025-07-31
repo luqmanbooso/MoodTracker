@@ -2,7 +2,9 @@ import express from 'express';
 import { 
   getProgress, 
   awardPoints, 
-  getActivities 
+  getActivities,
+  getAchievements,
+  getStats
 } from '../controllers/progressController.js';
 import { authenticateUser } from '../middleware/auth.js';
 
@@ -19,5 +21,11 @@ router.post('/points', awardPoints);
 
 // Get user's recent activities
 router.get('/activities', getActivities);
+
+// Get user achievements
+router.get('/achievements', getAchievements);
+
+// Get user stats
+router.get('/stats', getStats);
 
 export default router;

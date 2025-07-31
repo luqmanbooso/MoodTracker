@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getAIResponse } from '../services/aiService';
+import { aiService } from '../services/aiService';
 
 const FloatingChatButton = ({ moods, habits, goals }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -14,7 +14,7 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
     if (chatHistory.length === 0) {
       setChatHistory([{
         role: 'assistant',
-        content: "Hi there! I'm your Mindset Coach. How can I help you today?"
+        content: "Hi there! I'm your AI Wellness Coach. How can I help you today?"
       }]);
     }
   };
@@ -47,10 +47,14 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
       };
 
       // Send message to AI service
-      const response = await getAIResponse(userMessage, context);
+      const response = await aiService.generateWellnessResponse(userMessage, context);
 
       // Add AI response to chat
-      setChatHistory(prev => [...prev, { role: 'assistant', content: response.message, action: response.action }]);
+      setChatHistory(prev => [...prev, { 
+        role: 'assistant', 
+        content: response.response || response.message || 'I understand. How can I help you further?',
+        action: response.action 
+      }]);
     } catch (error) {
       console.error('Error sending message:', error);
       setChatHistory(prev => [...prev, { 
@@ -83,7 +87,7 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
           <div className="bg-emerald-600 text-white px-4 py-3 flex justify-between items-center">
             {!minimized && (
               <>
-                <h3 className="font-medium">Mindset Coach</h3>
+                <h3 className="font-medium">AI Wellness Coach</h3>
                 <div className="flex space-x-2">
                   <button onClick={handleMinimize} className="hover:bg-emerald-700 rounded p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -100,7 +104,7 @@ const FloatingChatButton = ({ moods, habits, goals }) => {
             )}
             {minimized && (
               <>
-                <h3 className="font-medium">Mindset Coach</h3>
+                <h3 className="font-medium">AI Wellness Coach</h3>
                 <div className="flex space-x-2">
                   <button onClick={handleMinimize} className="hover:bg-emerald-700 rounded p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
