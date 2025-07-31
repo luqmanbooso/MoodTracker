@@ -8,6 +8,7 @@ import resourceRoutes from './routes/resourceRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import progressRoutes from './routes/progressRoutes.js';
 import quoteRoutes from './routes/quoteRoutes.js';
+import todoRoutes from './routes/todoRoutes.js';
 import { seedResources } from './controllers/resourceController.js';
 import { initializeDatabase } from './utils/initDb.js';
 
@@ -29,6 +30,12 @@ app.use('/api/resources', resourceRoutes); // Add the new resource routes
 app.use('/api/ai', aiRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/quotes', quoteRoutes);
+app.use('/api/todos', todoRoutes);
+
+// Debug route to test if server is working
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'Server is working!' });
+});
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI, {

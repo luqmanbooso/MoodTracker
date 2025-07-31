@@ -25,9 +25,9 @@ const MoodList = ({ moods, deleteMood }) => {
 
   return (
     <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-      {moods.map(mood => (
+      {moods.map((mood, index) => (
         <div 
-          key={mood._id} 
+          key={mood._id || `mood-${index}`} 
           className={`p-4 border rounded-lg shadow-sm ${getMoodColor(mood.mood)}`}
         >
           <div className="flex justify-between items-start">

@@ -17,6 +17,9 @@ import HabitBuilder from './components/HabitBuilder';
 import GoalTracker from './components/GoalTracker';
 import MoodAssistant from './components/MoodAssistant';
 import Settings from './components/Settings';
+import TodoList from './components/TodoList.jsx';
+import RecommendationSelector from './components/RecommendationSelector.jsx';
+import ProgressSystem from './components/ProgressSystem.jsx';
 
 
 import React from 'react';
@@ -47,7 +50,7 @@ function AppContent() {
   const [moods, setMoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [view, setView] = useState('dashboard'); // 'dashboard', 'log', 'insights', 'progress', 'chat'
+  const [view, setView] = useState('dashboard'); // 'dashboard', 'log', 'insights', 'progress', 'chat', 'todos'
   const [customMoodCategories, setCustomMoodCategories] = useState(() => {
     // Load from localStorage if available
     const saved = localStorage.getItem('custom-moods');
@@ -64,10 +67,17 @@ function AppContent() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [todos, setTodos] = useState(() => {
+    const saved = localStorage.getItem('todos');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [showMoodForm, setShowMoodForm] = useState(false);
   const [showSuccessNotification, setShowSuccessNotification] = useState(false);
   const [showInsightsModal, setShowInsightsModal] = useState(false);
   const [currentInsights, setCurrentInsights] = useState(null);
+  const [showRecommendationSelector, setShowRecommendationSelector] = useState(false);
+  const [currentRecommendations, setCurrentRecommendations] = useState([]);
   
   const streak = computeStreak();
 
@@ -85,10 +95,22 @@ function AppContent() {
     buttonHover: 'hover:bg-emerald-700',
   };
 
-  // Fetch moods on component mount
+  // Fetch moods and todos on component mount
   useEffect(() => {
     fetchMoods();
+    fetchTodos();
   }, []);
+
+  // Fetch todos from backend
+  const fetchTodos = async () => {
+    try {
+      const backendTodos = await aiService.getTodos();
+      setTodos(backendTodos);
+    } catch (error) {
+      console.error('Error fetching todos:', error);
+      // Keep existing todos from localStorage if backend fails
+    }
+  };
 
   // Save localProgress to localStorage whenever it changes
   useEffect(() => {
@@ -99,6 +121,11 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('custom-moods', JSON.stringify(customMoodCategories));
   }, [customMoodCategories]);
+
+  // Save todos to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('todos', JSON.stringify(todos));
+  }, [todos]);
   
 
 
@@ -375,60 +402,72 @@ function AppContent() {
     // Based on current wellness score
     if (currentScore < 6) {
       recommendations.push({
-        type: 'immediate',
         title: 'Focus on Self-Care',
-        action: 'Try a 10-minute meditation, take a warm bath, or call a friend.',
-        priority: 'high'
+        description: 'Try a 10-minute meditation, take a warm bath, or call a friend.',
+        category: 'self-care',
+        priority: 'high',
+        estimatedTime: '10 minutes',
+        pointsReward: 15
       });
     }
 
     // Based on stress level
     if (newMood.stressLevel >= 7) {
       recommendations.push({
-        type: 'stress_management',
         title: 'Stress Management',
-        action: 'Practice deep breathing, take a walk, or try progressive muscle relaxation.',
-        priority: 'high'
+        description: 'Practice deep breathing, take a walk, or try progressive muscle relaxation.',
+        category: 'mindfulness',
+        priority: 'high',
+        estimatedTime: '15 minutes',
+        pointsReward: 20
       });
     }
 
     // Based on sleep quality
     if (newMood.sleepQuality <= 4) {
       recommendations.push({
-        type: 'sleep_improvement',
         title: 'Improve Sleep',
-        action: 'Create a bedtime routine, avoid screens before bed, and keep your bedroom cool.',
-        priority: 'medium'
+        description: 'Create a bedtime routine, avoid screens before bed, and keep your bedroom cool.',
+        category: 'sleep',
+        priority: 'medium',
+        estimatedTime: '30 minutes',
+        pointsReward: 15
       });
     }
 
     // Based on energy level
     if (newMood.energyLevel <= 4) {
       recommendations.push({
-        type: 'energy_boost',
         title: 'Boost Energy',
-        action: 'Take a short walk, eat a nutritious snack, or listen to upbeat music.',
-        priority: 'medium'
+        description: 'Take a short walk, eat a nutritious snack, or listen to upbeat music.',
+        category: 'exercise',
+        priority: 'medium',
+        estimatedTime: '20 minutes',
+        pointsReward: 15
       });
     }
 
     // Based on activities
     if (!newMood.activities || newMood.activities.length === 0) {
       recommendations.push({
-        type: 'activity',
         title: 'Add Wellness Activities',
-        action: 'Try meditation, exercise, or a creative activity today.',
-        priority: 'medium'
+        description: 'Try meditation, exercise, or a creative activity today.',
+        category: 'wellness',
+        priority: 'medium',
+        estimatedTime: '15 minutes',
+        pointsReward: 10
       });
     }
 
     // Based on gratitude
     if (!newMood.gratitude || !newMood.gratitude.trim()) {
       recommendations.push({
-        type: 'gratitude',
         title: 'Practice Gratitude',
-        action: 'Write down 3 things you\'re grateful for today.',
-        priority: 'low'
+        description: 'Write down 3 things you\'re grateful for today.',
+        category: 'mindfulness',
+        priority: 'low',
+        estimatedTime: '5 minutes',
+        pointsReward: 10
       });
     }
 
@@ -499,6 +538,13 @@ function AppContent() {
         console.log('Using local insights:', insights);
       }
       
+      // Generate recommendations for todo list
+      const recommendations = generateRecommendations(newMood, [...moods, newMood]);
+      if (recommendations.length > 0) {
+        setCurrentRecommendations(recommendations);
+        setShowRecommendationSelector(true);
+      }
+
       // Show insights modal
       if (insights) {
         setShowInsightsModal(true);
@@ -672,6 +718,106 @@ function AppContent() {
   useEffect(() => {
     localStorage.setItem('goals', JSON.stringify(goals));
   }, [goals]);
+
+  // Todo management functions
+  const handleAddTodo = async (todoData) => {
+    try {
+      const newTodo = await aiService.addTodo({
+        ...todoData,
+        aiGenerated: true
+      });
+      setTodos(prev => [newTodo, ...prev]);
+    } catch (error) {
+      console.error('Error adding todo:', error);
+      // Fallback to local storage if backend fails
+      const fallbackTodo = {
+        id: Date.now(),
+        ...todoData,
+        completed: false,
+        createdAt: new Date(),
+        aiGenerated: true
+      };
+      setTodos(prev => {
+        const updatedTodos = [fallbackTodo, ...prev];
+        localStorage.setItem('todos', JSON.stringify(updatedTodos));
+        return updatedTodos;
+      });
+    }
+  };
+
+  const handleCompleteTodo = async (todoId) => {
+    const todo = todos.find(t => t._id === todoId || t.id === todoId);
+    if (!todo) return;
+
+    try {
+      // Send completion to backend
+      const result = await aiService.trackTodoCompletion({
+        todoId: todo._id || todoId,
+        completedAt: new Date().toISOString(),
+        userContext: {
+          wellnessScore: calculateWellnessScore(moods[moods.length - 1] || {}),
+          moods: moods,
+          habits: habits,
+          goals: goals
+        }
+      });
+
+      // Update local state based on backend response
+      setTodos(prev => prev.map(t => 
+        (t._id === todoId || t.id === todoId) ? { ...t, completed: !t.completed } : t
+      ));
+
+      // Update progress if points were awarded
+      if (result.pointsEarned > 0) {
+        setLocalProgress(prev => ({
+          ...prev,
+          points: prev.points + result.pointsEarned,
+          level: result.newLevel || prev.level
+        }));
+      }
+
+      // Show level up notification if applicable
+      if (result.leveledUp) {
+        console.log(`🎉 Level Up! You're now level ${result.newLevel}!`);
+      }
+
+    } catch (error) {
+      console.error('Error completing todo:', error);
+      // Fallback to local completion
+      setTodos(prev => {
+        const updatedTodos = prev.map(t => 
+          (t._id === todoId || t.id === todoId) ? { ...t, completed: !t.completed } : t
+        );
+        localStorage.setItem('todos', JSON.stringify(updatedTodos));
+        return updatedTodos;
+      });
+      
+      // Award points locally
+      if (!todo.completed) {
+        const pointsToAdd = todo.pointsReward || 10;
+        setLocalProgress(prev => ({
+          ...prev,
+          points: prev.points + pointsToAdd,
+          level: Math.floor((prev.points + pointsToAdd) / 100) + 1
+        }));
+      }
+    }
+  };
+
+  const handleDeleteTodo = async (todoId) => {
+    try {
+      await aiService.deleteTodo(todo._id || todoId);
+      setTodos(prev => prev.filter(todo => (todo._id !== todoId && todo.id !== todoId)));
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+      // Fallback to local deletion
+      setTodos(prev => {
+        const updatedTodos = prev.filter(todo => (todo._id !== todoId && todo.id !== todoId));
+        localStorage.setItem('todos', JSON.stringify(updatedTodos));
+        return updatedTodos;
+      });
+    }
+  };
 
   const latestMood = moods.length > 0 ? {
     mood: moods[0].mood,
@@ -935,6 +1081,17 @@ function AppContent() {
             </div>
           </div>
         </div>
+        
+        {/* Personalized Todo List */}
+        <TodoList 
+          todos={todos}
+          moods={moods}
+          habits={habits}
+          goals={goals}
+          wellnessScore={moods.length > 0 ? calculateWellnessScore(moods[0]) : 5}
+          setView={setView}
+          onTodoComplete={handleCompleteTodo}
+        />
         
         {/* Recent Wellness Check-ins */}
         {moods.length > 0 && (
@@ -1435,55 +1592,46 @@ function AppContent() {
             </div>
           )}
 
-          {/* Progress View - Simplified */}
+          {/* Progress View - Enhanced */}
           {view === 'progress' && (
+            <ProgressSystem 
+              points={localProgress.points}
+              level={localProgress.level}
+              todos={todos}
+              moods={moods}
+              onLevelUp={(newLevel) => {
+                setLocalProgress(prev => ({ ...prev, level: newLevel }));
+              }}
+            />
+          )}
+
+          {/* Todos View */}
+          {view === 'todos' && (
             <div className="space-y-6">
               <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                <h2 className="text-2xl font-bold text-white mb-4">Your Wellness Progress</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-white mb-2">Total Check-ins</h3>
-                    <p className="text-3xl font-bold text-emerald-400">{localProgress.totalCheckins}</p>
-                  </div>
-                  <div className="bg-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-white mb-2">Wellness Level</h3>
-                    <p className="text-3xl font-bold text-emerald-400">{localProgress.level}</p>
-                  </div>
-                  <div className="bg-gray-700 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-white mb-2">Total Points</h3>
-                    <p className="text-3xl font-bold text-emerald-400">{localProgress.points}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-                <h2 className="text-2xl font-bold text-white mb-4">Recent Activity</h2>
-                <div className="space-y-3">
-                  {moods.slice(0, 5).map((mood, index) => (
-                    <div key={index} className="bg-gray-700 rounded-lg p-3 flex items-center justify-between">
-                      <div className="flex items-center">
-                        <span className="text-2xl mr-3">
-                          {mood.mood === 'thriving' ? '😊' : 
-                           mood.mood === 'good' ? '🙂' : 
-                           mood.mood === 'neutral' ? '😐' : 
-                           mood.mood === 'struggling' ? '😔' : '😰'}
-                        </span>
-                        <div>
-                          <p className="text-white font-medium capitalize">{mood.mood}</p>
-                          <p className="text-gray-400 text-sm">
-                            {new Date(mood.timestamp).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-emerald-400 font-medium">+15 points</p>
-                        <p className="text-gray-400 text-xs">Wellness check-in</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <h2 className="text-2xl font-bold text-white mb-4">Personalized Wellness Tasks</h2>
+                <p className="text-gray-400 mb-6">Track your progress and build healthy habits based on your wellness patterns.</p>
+                
+                <TodoList 
+                  todos={todos}
+                  moods={moods}
+                  habits={habits}
+                  goals={goals}
+                  wellnessScore={moods.length > 0 ? calculateWellnessScore(moods[0]) : 5}
+                  setView={setView}
+                  onTodoComplete={handleCompleteTodo}
+                />
               </div>
             </div>
+          )}
+
+          {/* Recommendation Selector Modal */}
+          {showRecommendationSelector && (
+            <RecommendationSelector
+              recommendations={currentRecommendations}
+              onAddToTodo={handleAddTodo}
+              onClose={() => setShowRecommendationSelector(false)}
+            />
           )}
 
           {/* Modal for logging mood */}

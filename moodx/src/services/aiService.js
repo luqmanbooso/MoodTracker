@@ -106,6 +106,71 @@ export const aiService = {
       console.error('Error generating goal recommendations:', error);
       throw new Error('Unable to generate goal recommendations at this time.');
     }
+  },
+
+  // Get all todos
+  async getTodos() {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/todos`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting todos:', error);
+      throw new Error('Unable to get todos at this time.');
+    }
+  },
+
+  // Add a new todo
+  async addTodo(todoData) {
+    try {
+      const response = await axios.post(`http://localhost:5000/api/todos`, todoData);
+      return response.data;
+    } catch (error) {
+      console.error('Error adding todo:', error);
+      throw new Error('Unable to add todo at this time.');
+    }
+  },
+
+  // Generate personalized todo recommendations
+  async generateTodoRecommendations(userContext) {
+    try {
+      const response = await axios.post(`http://localhost:5000/api/todos/todo-recommendations`, {
+        moods: userContext.moods || [],
+        habits: userContext.habits || [],
+        goals: userContext.goals || [],
+        wellnessScore: userContext.wellnessScore || 0,
+        currentTodos: userContext.currentTodos || []
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error generating todo recommendations:', error);
+      throw new Error('Unable to generate todo recommendations at this time.');
+    }
+  },
+
+  // Track todo completion for AI analysis
+  async trackTodoCompletion(data) {
+    try {
+      const response = await axios.post(`http://localhost:5000/api/todos/track-todo-completion`, {
+        todoId: data.todoId,
+        completedAt: data.completedAt,
+        userContext: data.userContext
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error tracking todo completion:', error);
+      throw new Error('Unable to track todo completion at this time.');
+    }
+  },
+
+  // Delete a todo
+  async deleteTodo(todoId) {
+    try {
+      const response = await axios.delete(`http://localhost:5000/api/todos/${todoId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting todo:', error);
+      throw new Error('Unable to delete todo at this time.');
+    }
   }
 };
 

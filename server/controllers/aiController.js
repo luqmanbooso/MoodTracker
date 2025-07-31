@@ -302,6 +302,48 @@ export const generateMoodInsights = async (req, res) => {
     const needsIntervention = avgScore < 5;
     const interventionLevel = avgScore < 3 ? 'high' : avgScore < 5 ? 'medium' : 'low';
 
+    // Check if API key is configured
+    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here') {
+      // Generate fallback insights based on mood data
+      const fallbackInsights = {
+        summary: `Based on your mood data, you have an average wellness score of ${avgScore.toFixed(1)}/5. ${needsIntervention ? 'I notice you could benefit from some additional support.' : 'You\'re maintaining good wellness levels.'}`,
+        patterns: [
+          `Your recent mood pattern shows ${avgScore < 3 ? 'some challenges' : avgScore < 4 ? 'mixed patterns' : 'positive trends'}`,
+          `You have ${recentMoods.length} mood entries tracked so far`,
+          needsIntervention ? 'Consider focusing on self-care activities' : 'Keep up your positive wellness practices'
+        ],
+        recommendations: [
+          {
+            title: 'Practice deep breathing',
+            description: 'Take 5 minutes to focus on your breath',
+            category: 'mindfulness',
+            priority: 'medium',
+            estimatedTime: '5 minutes',
+            pointsReward: 10
+          },
+          {
+            title: 'Go for a walk',
+            description: 'Physical activity can improve your mood',
+            category: 'exercise',
+            priority: 'medium',
+            estimatedTime: '15 minutes',
+            pointsReward: 15
+          },
+          {
+            title: 'Connect with someone',
+            description: 'Social connection is important for mental health',
+            category: 'social',
+            priority: 'low',
+            estimatedTime: '10 minutes',
+            pointsReward: 10
+          }
+        ],
+        needsIntervention: needsIntervention,
+        interventionLevel: interventionLevel
+      };
+      return res.json(fallbackInsights);
+    }
+
     const prompt = `Analyze this mood data and provide deep, personalized insights with intervention recommendations:
 
 Mood Data: ${JSON.stringify(moodData)}
