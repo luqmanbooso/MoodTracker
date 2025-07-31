@@ -4,7 +4,8 @@ import Mood from '../models/Mood.js';
 export const getMoods = async (req, res) => {
   try {
     console.log('Getting all moods');
-    const moods = await Mood.find().sort({ date: -1 });
+    const userId = req.userId;
+    const moods = await Mood.find({ user: userId }).sort({ date: -1 });
     res.json(moods);
   } catch (err) {
     console.error('Error in getMoods controller:', err.message);
@@ -28,6 +29,7 @@ export const createMood = async (req, res) => {
     }
     
     const newMood = new Mood({
+      user: req.userId,
       mood,
       customMood: customMood || '',
       intensity,
@@ -48,7 +50,8 @@ export const createMood = async (req, res) => {
 // Update mood
 export const updateMood = async (req, res) => {
   try {
-    let mood = await Mood.findById(req.params.id);
+    const userId = req.userId;
+    let mood = await Mood.findOne({ _id: req.params.id, user: userId });
 
     if (!mood) {
       return res.status(404).json({ message: 'Mood not found' });
@@ -70,7 +73,8 @@ export const updateMood = async (req, res) => {
 // Delete mood
 export const deleteMood = async (req, res) => {
   try {
-    let mood = await Mood.findById(req.params.id);
+    const userId = req.userId;
+    let mood = await Mood.findOne({ _id: req.params.id, user: userId });
 
     if (!mood) {
       return res.status(404).json({ message: 'Mood not found' });

@@ -6,27 +6,28 @@ import {
   trackTodoCompletion, 
   deleteTodo 
 } from '../controllers/todoController.js';
+import { verifyToken } from '../controllers/authController.js';
 
 const router = express.Router();
 
-// Get all todos for user
-router.get('/', getTodos);
+// Get all todos for user (requires authentication)
+router.get('/', verifyToken, getTodos);
 
-// Add a new todo
-router.post('/', addTodo);
+// Add a new todo (requires authentication)
+router.post('/', verifyToken, addTodo);
 
 // Test route to verify todo routes are working
 router.get('/test', (req, res) => {
   res.json({ message: 'Todo routes are working!' });
 });
 
-// Generate personalized todo recommendations
-router.post('/todo-recommendations', generateTodoRecommendations);
+// Generate personalized todo recommendations (requires authentication)
+router.post('/todo-recommendations', verifyToken, generateTodoRecommendations);
 
-// Track todo completion for AI analysis
-router.post('/track-todo-completion', trackTodoCompletion);
+// Track todo completion for AI analysis (requires authentication)
+router.post('/track-todo-completion', verifyToken, trackTodoCompletion);
 
-// Delete a todo
-router.delete('/:todoId', deleteTodo);
+// Delete a todo (requires authentication)
+router.delete('/:todoId', verifyToken, deleteTodo);
 
 export default router; 

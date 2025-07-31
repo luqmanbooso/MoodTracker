@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import Logo from './Logo';
 
-const Navigation = ({ activeView, setView, openSettingsModal }) => {
+const Navigation = ({ activeView, setView, openSettingsModal, onLogout, user }) => {
   const { darkMode } = useTheme();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
@@ -94,8 +94,31 @@ const Navigation = ({ activeView, setView, openSettingsModal }) => {
           </ul>
         </nav>
         
-        {/* Settings button */}
-        <div className="p-4 border-t border-gray-800">
+        {/* User Profile Section */}
+        {user && (
+          <div className="p-4 border-t border-gray-800">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {user.name || 'User'}
+                </p>
+                <p className="text-xs text-gray-400 truncate">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+
+
+        {/* Settings and Logout buttons */}
+        <div className="p-4 border-t border-gray-800 space-y-2">
           <button
             onClick={openSettingsModal}
             className="w-full flex items-center px-4 py-3 rounded-lg text-gray-300 hover:text-emerald-400 transition-colors"
@@ -105,6 +128,16 @@ const Navigation = ({ activeView, setView, openSettingsModal }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             Settings
+          </button>
+          
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center px-4 py-3 rounded-lg text-red-400 hover:text-red-300 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Logout
           </button>
         </div>
       </div>

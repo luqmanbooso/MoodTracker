@@ -1,36 +1,29 @@
 import express from 'express';
+import { 
+  register, 
+  login, 
+  getProfile, 
+  updateProfile, 
+  verifyToken 
+} from '../controllers/authController.js';
 
 const router = express.Router();
 
-// Mock auth endpoints
-router.post('/register', (req, res) => {
-  res.json({
-    _id: "dev-user-123", 
-    name: req.body.name || "Development User",
-    email: req.body.email || "dev@example.com",
-    token: "dev-token-123456"
-  });
+// Test route to verify auth routes are working
+router.get('/test', (req, res) => {
+  res.json({ message: 'Auth routes are working!' });
 });
 
+// Public routes
+router.post('/register', register);
 router.post('/login', (req, res) => {
-  res.json({
-    _id: "dev-user-123", 
-    name: "Development User",
-    email: req.body.email || "dev@example.com",
-    token: "dev-token-123456"
-  });
+  console.log('Login route hit!');
+  console.log('Request body:', req.body);
+  login(req, res);
 });
 
-router.get('/profile', (req, res) => {
-  res.json({
-    _id: "dev-user-123", 
-    name: "Development User",
-    email: "dev@example.com",
-    preferences: {
-      theme: "light",
-      notifications: true
-    }
-  });
-});
+// Protected routes (require authentication)
+router.get('/profile', verifyToken, getProfile);
+router.put('/profile', verifyToken, updateProfile);
 
 export default router;

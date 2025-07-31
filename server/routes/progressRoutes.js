@@ -6,12 +6,12 @@ import {
   getAchievements,
   getStats
 } from '../controllers/progressController.js';
-import { authenticateUser } from '../middleware/auth.js';
+import { verifyToken } from '../controllers/authController.js';
 
 const router = express.Router();
 
-// Add mock user to all requests (optional)
-router.use(authenticateUser);
+// All progress routes require authentication
+router.use(verifyToken);
 
 // Get user progress
 router.get('/', getProgress);

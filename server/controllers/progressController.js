@@ -3,15 +3,15 @@ import Progress from '../models/Progress.js';
 // Get user progress
 export const getProgress = async (req, res) => {
   try {
-    // Since we're not implementing auth, use default user
-    const defaultUserId = '000000000000000000000000';
+    // Get user ID from auth (required)
+    const userId = req.userId;
     
-    let progress = await Progress.findOne({ user: defaultUserId });
+    let progress = await Progress.findOne({ user: userId });
     
     // If no progress record exists yet, create one
     if (!progress) {
       progress = new Progress({
-        user: defaultUserId
+        user: userId
       });
       await progress.save();
     }
@@ -49,15 +49,15 @@ export const awardPoints = async (req, res) => {
       });
     }
     
-    // Since we're not implementing auth, use default user
-    const defaultUserId = '000000000000000000000000';
+    // Get user ID from auth (required)
+    const userId = req.userId;
     
-    let progress = await Progress.findOne({ user: defaultUserId });
+    let progress = await Progress.findOne({ user: userId });
     
     // If no progress record exists yet, create one
     if (!progress) {
       progress = new Progress({
-        user: defaultUserId
+        user: userId
       });
     }
     

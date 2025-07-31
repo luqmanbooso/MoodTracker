@@ -7,8 +7,9 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 // Get all todos for user
 export const getTodos = async (req, res) => {
   try {
-    const defaultUserId = '000000000000000000000000';
-    const todos = await Todo.find({ user: defaultUserId }).sort({ createdAt: -1 });
+    // Get user ID from auth (required)
+    const userId = req.userId;
+    const todos = await Todo.find({ user: userId }).sort({ createdAt: -1 });
     res.json(todos);
   } catch (error) {
     console.error('Error getting todos:', error);
@@ -20,10 +21,11 @@ export const getTodos = async (req, res) => {
 export const addTodo = async (req, res) => {
   try {
     console.log('addTodo called with body:', req.body);
-    const defaultUserId = '000000000000000000000000';
+    // Get user ID from auth (required)
+    const userId = req.userId;
     const todoData = {
       ...req.body,
-      user: defaultUserId
+      user: userId
     };
     
     console.log('Creating todo with data:', todoData);
@@ -313,9 +315,10 @@ export const trackTodoCompletion = async (req, res) => {
 export const deleteTodo = async (req, res) => {
   try {
     const { todoId } = req.params;
-    const defaultUserId = '000000000000000000000000';
+    // Get user ID from auth (required)
+    const userId = req.userId;
 
-    const todo = await Todo.findOneAndDelete({ _id: todoId, user: defaultUserId });
+    const todo = await Todo.findOneAndDelete({ _id: todoId, user: userId });
     if (!todo) {
       return res.status(404).json({ error: 'Todo not found' });
     }

@@ -25,7 +25,10 @@ import ProgressSystem from './components/ProgressSystem.jsx';
 import React from 'react';
 
 import FloatingChatButton from './components/FloatingChatButton';
+import Login from './components/Login';
+import Register from './components/Register';
 import { aiService } from './services/aiService.js';
+import authService from './services/authService.js';
 
 // Main App component wrapper with ThemeProvider
 function AppWithTheme() {
@@ -78,11 +81,18 @@ function AppContent() {
   const [currentInsights, setCurrentInsights] = useState(null);
   const [showRecommendationSelector, setShowRecommendationSelector] = useState(false);
   const [currentRecommendations, setCurrentRecommendations] = useState([]);
+
   
   const streak = computeStreak();
 
   // Add this state for controlling the settings modal
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+  // Authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [showLogin, setShowLogin] = useState(true); // true for login, false for register
 
   // Consistent theme colors
   const theme = {
@@ -95,11 +105,76 @@ function AppContent() {
     buttonHover: 'hover:bg-emerald-700',
   };
 
-  // Fetch moods and todos on component mount
+  // Initialize authentication
   useEffect(() => {
-    fetchMoods();
-    fetchTodos();
+    const initAuth = async () => {
+      try {
+        authService.initAuth();
+        if (authService.isAuthenticated()) {
+          const userProfile = await authService.getProfile();
+          setUser(userProfile);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        authService.logout();
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
+
+  // Fetch moods and todos on component mount (only if authenticated)
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchMoods();
+      fetchTodos();
+    }
+  }, [isAuthenticated]);
+
+  // Authentication handlers
+  const handleLogin = async (credentials) => {
+    try {
+      setAuthLoading(true);
+      const { user: userData, token } = await authService.login(credentials);
+      setUser(userData);
+      setIsAuthenticated(true);
+      setShowLogin(true);
+    } catch (error) {
+      throw error;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleRegister = async (userData) => {
+    try {
+      setAuthLoading(true);
+      const { user: newUser, token } = await authService.register(userData);
+      setUser(newUser);
+      setIsAuthenticated(true);
+      setShowLogin(true);
+    } catch (error) {
+      throw error;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    authService.logout();
+    setUser(null);
+    setIsAuthenticated(false);
+    setMoods([]);
+    setTodos([]);
+    setLocalProgress({
+      points: 0,
+      level: 1,
+      totalCheckins: 0
+    });
+  };
 
   // Fetch todos from backend
   const fetchTodos = async () => {
@@ -825,12 +900,43 @@ function AppContent() {
     date: new Date(moods[0].date).toLocaleDateString()
   } : null;
 
+  // Show loading screen while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-blue-900 to-purple-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading your wellness journey...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authentication screens if not logged in
+  if (!isAuthenticated) {
+    return showLogin ? (
+      <Login 
+        onLogin={handleLogin}
+        onSwitchToRegister={() => setShowLogin(false)}
+        isLoading={authLoading}
+      />
+    ) : (
+      <Register 
+        onRegister={handleRegister}
+        onSwitchToLogin={() => setShowLogin(true)}
+        isLoading={authLoading}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <Navigation 
         activeView={view} 
         setView={setView}
         openSettingsModal={() => setIsSettingsModalOpen(true)}
+        onLogout={handleLogout}
+        user={user}
       />
       
 
@@ -1633,6 +1739,8 @@ function AppContent() {
               onClose={() => setShowRecommendationSelector(false)}
             />
           )}
+
+
 
           {/* Modal for logging mood */}
           {showMoodForm && (

@@ -9,6 +9,7 @@ import aiRoutes from './routes/aiRoutes.js';
 import progressRoutes from './routes/progressRoutes.js';
 import quoteRoutes from './routes/quoteRoutes.js';
 import todoRoutes from './routes/todoRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import { seedResources } from './controllers/resourceController.js';
 import { initializeDatabase } from './utils/initDb.js';
 
@@ -23,7 +24,14 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Debug all incoming requests (moved before routes)
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path} - Body:`, req.body);
+  next();
+});
+
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/moods', moodRoutes);
 app.use('/api/challenges', challengeRoutes);
 app.use('/api/resources', resourceRoutes); // Add the new resource routes
@@ -35,6 +43,11 @@ app.use('/api/todos', todoRoutes);
 // Debug route to test if server is working
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Server is working!' });
+});
+
+// Test auth route
+app.get('/api/auth-test', (req, res) => {
+  res.json({ message: 'Auth test route is working!' });
 });
 
 // MongoDB connection
