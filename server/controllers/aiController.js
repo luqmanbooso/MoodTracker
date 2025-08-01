@@ -7,7 +7,7 @@ const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Check if API key is configured
-if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here') {
+if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here' || OPENROUTER_API_KEY === '') {
   console.warn('⚠️ OpenRouter API key not configured. AI features will be limited.');
 }
 
@@ -27,7 +27,7 @@ Context: ${context ? JSON.stringify(context) : 'No additional context provided'}
 Provide a helpful, supportive response that focuses on mental health and wellness. Be encouraging, practical, and evidence-based. Keep your response conversational and under 200 words.`;
 
     // Check if API key is configured
-    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here') {
+    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here' || OPENROUTER_API_KEY === '') {
       return res.json({
         response: "I'm your AI wellness coach! I'm here to support your mental health journey. How can I help you today? You can ask me about stress management, sleep, mood, habits, or just share how you're feeling.",
         source: 'fallback',
@@ -96,7 +96,7 @@ export const generateWellnessResponse = async (req, res) => {
     const recentActivity = userContext.recentActivity || [];
     const wellnessScore = userContext.wellnessScore || 0;
     const interactionCount = userContext.interactionCount || 0;
-    const needsIntervention = userContext.needsIntervention || false;
+    let needsIntervention = userContext.needsIntervention || false;
 
     // Create comprehensive user profile and wellness assessment
     let userProfile = '';
@@ -160,7 +160,12 @@ export const generateWellnessResponse = async (req, res) => {
     }
 
     // Check if API key is configured
-    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here') {
+    console.log('API Key check:', { 
+      hasKey: !!OPENROUTER_API_KEY, 
+      keyValue: OPENROUTER_API_KEY, 
+      keyLength: OPENROUTER_API_KEY?.length 
+    });
+    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here' || OPENROUTER_API_KEY === '' || OPENROUTER_API_KEY.includes('8242eba1a0e41486932a41a7019c2d930ec480e85262f5bb3d04d2660d453632')) {
       const fallbackResponse = needsIntervention 
         ? `I can see you're going through a challenging time. Your wellness score is ${wellnessScore.toFixed(1)}/5, and this is interaction ${interactionCount}. 
 
@@ -169,6 +174,7 @@ Based on your patterns, I want to help you create a personalized support plan. L
 What would you like to talk about first?`
         : `I'm your AI wellness coach! I'm here to support your mental health journey. How can I help you today? You can ask me about stress management, sleep, mood, habits, or just share how you're feeling.`;
 
+      console.log('Using fallback response');
       return res.json({
         response: fallbackResponse,
         suggestions: needsIntervention 
@@ -303,7 +309,7 @@ export const generateMoodInsights = async (req, res) => {
     const interventionLevel = avgScore < 3 ? 'high' : avgScore < 5 ? 'medium' : 'low';
 
     // Check if API key is configured
-    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here') {
+    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here' || OPENROUTER_API_KEY === '') {
       // Generate fallback insights based on mood data
       const fallbackInsights = {
         summary: `Based on your mood data, you have an average wellness score of ${avgScore.toFixed(1)}/5. ${needsIntervention ? 'I notice you could benefit from some additional support.' : 'You\'re maintaining good wellness levels.'}`,

@@ -84,7 +84,7 @@ export const generateTodoRecommendations = async (req, res) => {
     }
 
     // Check if API key is configured
-    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here') {
+    if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'your_openrouter_api_key_here' || OPENROUTER_API_KEY === '') {
       // Fallback todos based on wellness score
       const fallbackTodos = [];
       

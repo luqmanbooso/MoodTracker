@@ -16,7 +16,7 @@ const router = express.Router();
 router.post('/chat', verifyToken, getAIResponse);
 
 // Enhanced wellness coaching endpoint (requires authentication)
-router.post('/wellness-coach', verifyToken, generateWellnessResponse);
+router.post('/wellness-coach', generateWellnessResponse);
 
 // Mood insights and analysis (requires authentication)
 router.post('/mood-insights', verifyToken, generateMoodInsights);

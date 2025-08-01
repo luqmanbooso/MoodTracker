@@ -2,13 +2,27 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api/ai';
 
+// Create an axios instance with auth token
+const createAuthenticatedAxios = () => {
+  const token = localStorage.getItem('token');
+  const instance = axios.create({
+    baseURL: 'http://localhost:5000',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` })
+    }
+  });
+  return instance;
+};
+
 // Enhanced AI service for wellness coaching and insights
 export const aiService = {
   // Generate personalized wellness response
   async generateWellnessResponse(userMessage, userContext) {
     try {
       console.log('Attempting to call AI backend...');
-      const response = await axios.post(`${API_URL}/wellness-coach`, {
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.post(`${API_URL}/wellness-coach`, {
         message: userMessage,
         context: {
           moods: userContext.moods || [],
@@ -31,7 +45,8 @@ export const aiService = {
   // Generate mood insights and analysis
   async generateMoodInsights(moods, habits, goals) {
     try {
-      const response = await axios.post(`${API_URL}/mood-insights`, {
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.post(`${API_URL}/mood-insights`, {
         moods,
         habits,
         goals
@@ -46,7 +61,8 @@ export const aiService = {
   // Generate personalized recommendations
   async generateRecommendations(userData) {
     try {
-      const response = await axios.post(`${API_URL}/recommendations`, {
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.post(`${API_URL}/recommendations`, {
         currentMood: userData.currentMood,
         moodHistory: userData.moodHistory,
         habits: userData.habits,
@@ -64,7 +80,8 @@ export const aiService = {
   // Generate weekly wellness summary
   async generateWeeklySummary(moods, habits, goals) {
     try {
-      const response = await axios.post(`${API_URL}/weekly-summary`, {
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.post(`${API_URL}/weekly-summary`, {
         moods,
         habits,
         goals
@@ -79,7 +96,8 @@ export const aiService = {
   // Generate habit suggestions
   async generateHabitSuggestions(userProfile) {
     try {
-      const response = await axios.post(`${API_URL}/habit-suggestions`, {
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.post(`${API_URL}/habit-suggestions`, {
         currentHabits: userProfile.habits,
         goals: userProfile.goals,
         moodPatterns: userProfile.moodPatterns,
@@ -95,7 +113,8 @@ export const aiService = {
   // Generate goal recommendations
   async generateGoalRecommendations(userProfile) {
     try {
-      const response = await axios.post(`${API_URL}/goal-recommendations`, {
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.post(`${API_URL}/goal-recommendations`, {
         currentGoals: userProfile.goals,
         moodHistory: userProfile.moodHistory,
         habits: userProfile.habits,
@@ -111,7 +130,8 @@ export const aiService = {
   // Get all todos
   async getTodos() {
     try {
-      const response = await axios.get(`http://localhost:5000/api/todos`);
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.get(`/api/todos`);
       return response.data;
     } catch (error) {
       console.error('Error getting todos:', error);
@@ -122,7 +142,8 @@ export const aiService = {
   // Add a new todo
   async addTodo(todoData) {
     try {
-      const response = await axios.post(`http://localhost:5000/api/todos`, todoData);
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.post(`/api/todos`, todoData);
       return response.data;
     } catch (error) {
       console.error('Error adding todo:', error);
@@ -133,7 +154,8 @@ export const aiService = {
   // Generate personalized todo recommendations
   async generateTodoRecommendations(userContext) {
     try {
-      const response = await axios.post(`http://localhost:5000/api/todos/todo-recommendations`, {
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.post(`/api/todos/todo-recommendations`, {
         moods: userContext.moods || [],
         habits: userContext.habits || [],
         goals: userContext.goals || [],
@@ -150,7 +172,8 @@ export const aiService = {
   // Track todo completion for AI analysis
   async trackTodoCompletion(data) {
     try {
-      const response = await axios.post(`http://localhost:5000/api/todos/track-todo-completion`, {
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.post(`/api/todos/track-todo-completion`, {
         todoId: data.todoId,
         completedAt: data.completedAt,
         userContext: data.userContext
@@ -165,7 +188,8 @@ export const aiService = {
   // Delete a todo
   async deleteTodo(todoId) {
     try {
-      const response = await axios.delete(`http://localhost:5000/api/todos/${todoId}`);
+      const axiosInstance = createAuthenticatedAxios();
+      const response = await axiosInstance.delete(`/api/todos/${todoId}`);
       return response.data;
     } catch (error) {
       console.error('Error deleting todo:', error);
