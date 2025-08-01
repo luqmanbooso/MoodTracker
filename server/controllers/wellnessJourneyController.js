@@ -7,12 +7,7 @@ export const getWellnessJourney = async (req, res) => {
     const { userId } = req.params;
     const { page = 1, limit = 20, sort = '-date' } = req.query;
 
-    const options = {
-      page: parseInt(page),
-      limit: parseInt(limit),
-      sort: sort,
-      populate: 'aiInsights'
-    };
+    console.log('Fetching wellness journey for user:', userId);
 
     const entries = await WellnessJourney.find({ userId })
       .sort(sort)
@@ -20,6 +15,8 @@ export const getWellnessJourney = async (req, res) => {
       .skip((parseInt(page) - 1) * parseInt(limit));
 
     const total = await WellnessJourney.countDocuments({ userId });
+
+    console.log(`Found ${entries.length} entries for user ${userId}`);
 
     res.json({
       entries: entries.map(entry => entry.toPublicJSON()),
@@ -48,8 +45,13 @@ export const createWellnessEntry = async (req, res) => {
       userId
     };
 
+    console.log('Creating wellness entry for user:', userId);
+    console.log('Entry data:', entryData);
+
     const entry = new WellnessJourney(entryData);
     await entry.save();
+
+    console.log('Wellness entry created successfully:', entry._id);
 
     // Award points for wellness check-in
     await updatePoints(userId, 15, 'wellness_check_in', 'Completed wellness check-in');

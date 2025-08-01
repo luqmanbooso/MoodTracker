@@ -3,7 +3,13 @@ const API_URL = 'http://localhost:5000/api';
 // Mood API endpoints
 export const getMoods = async () => {
   try {
-    const response = await fetch(`${API_URL}/moods`);
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_URL}/moods`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      }
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch moods: ${response.status}`);
     }
@@ -17,10 +23,12 @@ export const getMoods = async () => {
 export const createMood = async (moodData) => {
   try {
     console.log('Sending mood data to API:', moodData);
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/moods`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
       },
       body: JSON.stringify({
         mood: moodData.mood,
@@ -46,8 +54,13 @@ export const createMood = async (moodData) => {
 
 export const deleteMood = async (id) => {
   try {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${API_URL}/moods/${id}`, {
       method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      }
     });
     if (!response.ok) {
       throw new Error(`Failed to delete mood: ${response.status}`);

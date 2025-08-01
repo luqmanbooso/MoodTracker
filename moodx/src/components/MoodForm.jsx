@@ -18,11 +18,11 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories, moods, habits, use
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const wellnessMoods = [
-    { value: 'thriving', label: 'Thriving', emoji: '🌟', description: 'Feeling energized, confident, and at peace' },
-    { value: 'good', label: 'Good', emoji: '😊', description: 'Generally positive and content' },
-    { value: 'neutral', label: 'Neutral', emoji: '😐', description: 'Neither particularly good nor bad' },
-    { value: 'struggling', label: 'Struggling', emoji: '😔', description: 'Having some difficulties but managing' },
-    { value: 'overwhelmed', label: 'Overwhelmed', emoji: '😰', description: 'Feeling stressed, anxious, or overwhelmed' }
+    { value: 'Great', label: 'Great', emoji: '🌟', description: 'Feeling energized, confident, and at peace' },
+    { value: 'Good', label: 'Good', emoji: '😊', description: 'Generally positive and content' },
+    { value: 'Okay', label: 'Okay', emoji: '😐', description: 'Neither particularly good nor bad' },
+    { value: 'Bad', label: 'Bad', emoji: '😔', description: 'Having some difficulties but managing' },
+    { value: 'Terrible', label: 'Terrible', emoji: '😰', description: 'Feeling stressed, anxious, or overwhelmed' }
   ];
 
   const wellnessActivities = [
@@ -89,7 +89,7 @@ const MoodForm = ({ addMood, isLoading, customMoodCategories, moods, habits, use
     let score = 0;
     
     // Base score from mood
-    const moodScores = { thriving: 10, good: 8, neutral: 6, struggling: 4, overwhelmed: 2 };
+    const moodScores = { Great: 10, Good: 8, Okay: 6, Bad: 4, Terrible: 2 };
     score += moodScores[mood] || 5;
     
     // Adjust for intensity

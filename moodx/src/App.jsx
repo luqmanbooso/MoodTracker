@@ -19,6 +19,7 @@ import MoodAssistant from './components/MoodAssistant';
 import Settings from './components/Settings';
 import EnhancedAnalytics from './components/EnhancedAnalytics';
 import WellnessJourneyEntry from './components/WellnessJourneyEntry';
+import WellnessCheckInForm from './components/WellnessCheckInForm';
 import TodoList from './components/TodoList.jsx';
 import RecommendationSelector from './components/RecommendationSelector.jsx';
 import ProgressSystem from './components/ProgressSystem.jsx';
@@ -258,41 +259,13 @@ function AppContent() {
   const fetchMoods = async () => {
     try {
       setLoading(true);
-      // Using dummy data for now - replace with actual API call
-      setTimeout(() => {
-        const dummyData = [
-          {
-            _id: '1',
-            mood: 'Good',
-            customMood: 'Motivated',
-            intensity: 7,
-            note: 'Had a productive day at work!',
-            activities: ['Work', 'Exercise'],
-            tags: ['productive', 'active'],
-            date: new Date()
-          },
-          {
-            _id: '2',
-            mood: 'Okay',
-            customMood: 'Reflective',
-            intensity: 5,
-            note: 'Feeling a bit tired today but had some good moments of reflection',
-            activities: ['Rest', 'Reading'],
-            tags: ['tired', 'peaceful'],
-            date: new Date(Date.now() - 86400000) // Yesterday
-          }
-        ];
-        setMoods(dummyData);
-        setLoading(false);
-      }, 1000);
-      
-      // Uncomment when API is ready
-      // const data = await getMoods();
-      // setMoods(data);
+      const data = await getMoods();
+      setMoods(data);
       setError(null);
     } catch (err) {
+      console.error('Error fetching moods:', err);
       setError('Failed to load moods. Please try again later.');
-      console.error(err);
+      setMoods([]);
     } finally {
       setLoading(false);
     }
@@ -310,8 +283,23 @@ function AppContent() {
     };
 
     // Immediate insights based on current mood
-    const moodScores = { thriving: 10, good: 8, neutral: 6, struggling: 4, overwhelmed: 2 };
+    const moodScores = { Great: 10, Good: 8, Okay: 6, Bad: 4, Terrible: 2 };
     const currentScore = moodScores[newMood.mood] || 5;
+
+    // Enhanced pattern analysis with real data
+    const recentMoods = allMoods.slice(0, 14); // Last 14 entries for better analysis
+    const moodCounts = recentMoods.reduce((acc, mood) => {
+      acc[mood.mood] = (acc[mood.mood] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Calculate mood frequency percentages
+    const totalMoods = recentMoods.length;
+    const moodPercentages = Object.entries(moodCounts).map(([mood, count]) => ({
+      mood,
+      count,
+      percentage: Math.round((count / totalMoods) * 100)
+    })).sort((a, b) => b.count - a.count);
 
     if (currentScore >= 8) {
       insights.immediate.push({
@@ -349,57 +337,86 @@ function AppContent() {
 
     // Analyze patterns if we have enough data
     if (allMoods.length >= 3) {
-      const recentMoods = allMoods.slice(0, 7); // Last 7 entries
-      const moodCounts = recentMoods.reduce((acc, mood) => {
-        acc[mood.mood] = (acc[mood.mood] || 0) + 1;
-        return acc;
-      }, {});
+      // Enhanced pattern analysis with real data
+      if (moodPercentages.length > 0) {
+        const dominantMood = moodPercentages[0];
+        
+        if (dominantMood.percentage >= 50) {
+          // Strong pattern detected
+          if (['Great', 'Good'].includes(dominantMood.mood)) {
+            insights.patterns.push({
+              type: 'positive_pattern',
+              title: 'Strong Positive Pattern',
+              message: `You've been feeling ${dominantMood.mood} ${dominantMood.percentage}% of the time. Excellent wellness consistency!`,
+              icon: '📈',
+              color: 'text-green-400'
+            });
+          } else if (['Bad', 'Terrible'].includes(dominantMood.mood)) {
+            insights.patterns.push({
+              type: 'challenging_pattern',
+              title: 'Challenging Pattern Detected',
+              message: `You've been feeling ${dominantMood.mood} ${dominantMood.percentage}% of the time. Let's work on some strategies.`,
+              icon: '📉',
+              color: 'text-red-400'
+            });
+          }
+        } else if (dominantMood.percentage >= 30) {
+          // Moderate pattern
+          if (['Great', 'Good'].includes(dominantMood.mood)) {
+            insights.patterns.push({
+              type: 'positive_pattern',
+              title: 'Positive Trend',
+              message: `You've been feeling ${dominantMood.mood} ${dominantMood.percentage}% of the time. Keep it up!`,
+              icon: '📈',
+              color: 'text-green-400'
+            });
+          }
+        }
 
-      // Pattern analysis
-      const dominantMood = Object.entries(moodCounts).reduce((a, b) => 
-        moodCounts[a[0]] > moodCounts[b[0]] ? a : b
-      )[0];
-
-      if (dominantMood === 'thriving' || dominantMood === 'good') {
-        insights.patterns.push({
-          type: 'positive_pattern',
-          title: 'Positive Pattern Detected',
-          message: `You've been feeling ${dominantMood} frequently. Your wellness practices are working well!`,
-          icon: '📈',
-          color: 'text-green-400'
-        });
-      } else if (dominantMood === 'struggling' || dominantMood === 'overwhelmed') {
-        insights.patterns.push({
-          type: 'challenging_pattern',
-          title: 'Challenging Pattern Detected',
-          message: `You've been feeling ${dominantMood} often. Let's work on some coping strategies.`,
-          icon: '📉',
-          color: 'text-red-400'
-        });
+        // Mood variety analysis
+        const uniqueMoods = Object.keys(moodCounts).length;
+        if (uniqueMoods >= 4) {
+          insights.patterns.push({
+            type: 'variety_pattern',
+            title: 'Emotional Variety',
+            message: `You're experiencing a good range of emotions (${uniqueMoods} different moods). This shows emotional awareness.`,
+            icon: '🌈',
+            color: 'text-purple-400'
+          });
+        }
       }
 
-      // Trend analysis
+      // Enhanced trend analysis with real data
       const recentScores = recentMoods.map(mood => moodScores[mood.mood] || 5);
-      const trend = recentScores[0] - recentScores[recentScores.length - 1];
+      const averageRecentScore = recentScores.reduce((sum, score) => sum + score, 0) / recentScores.length;
       
-      if (trend > 2) {
+      // Compare with previous period
+      const olderMoods = allMoods.slice(7, 14);
+      const olderScores = olderMoods.map(mood => moodScores[mood.mood] || 5);
+      const averageOlderScore = olderScores.length > 0 ? 
+        olderScores.reduce((sum, score) => sum + score, 0) / olderScores.length : averageRecentScore;
+      
+      const scoreChange = averageRecentScore - averageOlderScore;
+      const changePercentage = Math.round((scoreChange / averageOlderScore) * 100);
+      
+      if (scoreChange > 1.5) {
         insights.moodTrend = {
           type: 'improving',
-          message: 'Your wellness has been improving! Keep up the great work.',
+          message: `Your wellness has improved by ${changePercentage}%! Keep up the great work.`,
           icon: '🚀',
           color: 'text-emerald-400'
         };
-      } else if (trend < -2) {
+      } else if (scoreChange < -1.5) {
         insights.moodTrend = {
           type: 'declining',
-          message: 'I notice your wellness has been challenging lately. Let\'s work on some strategies.',
+          message: `I notice a ${Math.abs(changePercentage)}% decline in your wellness. Let's work on some strategies.`,
           icon: '⚠️',
           color: 'text-yellow-400'
         };
       } else {
         insights.moodTrend = {
           type: 'stable',
-          message: 'Your wellness has been relatively stable. Consistency is key!',
+          message: `Your wellness has been stable (${changePercentage}% change). Consistency is key!`,
           icon: '📊',
           color: 'text-blue-400'
         };
@@ -431,7 +448,7 @@ function AppContent() {
     let score = 0;
     
     // Base score from mood
-    const moodScores = { thriving: 10, good: 8, neutral: 6, struggling: 4, overwhelmed: 2 };
+    const moodScores = { Great: 10, Good: 8, Okay: 6, Bad: 4, Terrible: 2 };
     score += moodScores[mood.mood] || 5;
     
     // Adjust for intensity
@@ -487,7 +504,7 @@ function AppContent() {
 
   const generateRecommendations = (newMood, allMoods) => {
     const recommendations = [];
-    const moodScores = { thriving: 10, good: 8, neutral: 6, struggling: 4, overwhelmed: 2 };
+    const moodScores = { Great: 10, Good: 8, Okay: 6, Bad: 4, Terrible: 2 };
     const currentScore = moodScores[newMood.mood] || 5;
 
     // Based on current wellness score
@@ -571,14 +588,9 @@ function AppContent() {
       setLoading(true);
       setError(null);
       
-      // Create the mood entry
-      const newMood = {
-        ...moodData,
-        id: Date.now().toString(),
-        date: new Date().toISOString()
-      };
-
-      console.log('Created new mood entry:', newMood);
+      // Create mood using backend API
+      const newMood = await createMood(moodData);
+      console.log('Mood created via API:', newMood);
 
       // Add to local state
       setMoods(prev => [newMood, ...prev]);
@@ -642,9 +654,6 @@ function AppContent() {
         setCurrentInsights(insights);
       }
 
-      // Save to localStorage
-      localStorage.setItem('moods', JSON.stringify([newMood, ...moods]));
-
       // Show success notification
       setShowSuccessNotification(true);
       setTimeout(() => setShowSuccessNotification(false), 3000);
@@ -661,12 +670,13 @@ function AppContent() {
 
   const handleDeleteMood = async (id) => {
     try {
-      // In a real app, this would call an API
+      // Delete from backend API
+      await deleteMood(id);
+      
+      // Update local state
       setMoods(prevMoods => prevMoods.filter(mood => mood._id !== id));
       
-      // Uncomment when API is ready
-      // await deleteMood(id);
-      // setMoods(prevMoods => prevMoods.filter(mood._id !== id));
+      console.log('Mood deleted successfully');
     } catch (err) {
       setError('Failed to delete mood. Please try again.');
       console.error(err);
@@ -745,6 +755,7 @@ function AppContent() {
             ...prev,
             points: prev.points + 15
           }));
+          toast.success('Habit completed! +15 points earned!');
         }
         
         return { ...habit, completed: !wasCompleted, streak: newStreak };
@@ -769,6 +780,7 @@ function AppContent() {
       ...prev,
       points: prev.points + 20
     }));
+    toast.success('New goal set! +20 points earned!');
   };
 
   const handleUpdateGoal = (updatedGoal) => {
@@ -784,6 +796,7 @@ function AppContent() {
             ...prev,
             points: prev.points + 25
           }));
+          toast.success('Milestone completed! +25 points earned!');
         }
         
         // Check if the entire goal was completed
@@ -793,6 +806,7 @@ function AppContent() {
             ...prev,
             points: prev.points + 50
           }));
+          toast.success('Goal completed! +50 points earned!');
         }
         
         return updatedGoal;
@@ -865,11 +879,12 @@ function AppContent() {
           points: prev.points + result.pointsEarned,
           level: result.newLevel || prev.level
         }));
+        toast.success(`Todo completed! +${result.pointsEarned} points earned!`);
       }
 
       // Show level up notification if applicable
       if (result.leveledUp) {
-        console.log(`🎉 Level Up! You're now level ${result.newLevel}!`);
+        toast.success(`🎉 Level Up! You're now level ${result.newLevel}!`);
       }
 
     } catch (error) {
@@ -891,6 +906,7 @@ function AppContent() {
           points: prev.points + pointsToAdd,
           level: Math.floor((prev.points + pointsToAdd) / 100) + 1
         }));
+        toast.success(`Todo completed! +${pointsToAdd} points earned!`);
       }
     }
   };
@@ -926,13 +942,14 @@ function AppContent() {
     
     try {
       setWellnessLoading(true);
+      console.log('Fetching wellness entries for user:', user.id || user._id);
       const response = await wellnessJourneyService.getWellnessJourney(user.id || user._id);
+      console.log('Wellness entries response:', response);
       setWellnessEntries(response.entries || []);
     } catch (error) {
       console.error('Error fetching wellness entries:', error);
-      // Fallback to local storage
-      const localEntries = wellnessJourneyService.getWellnessEntriesLocally();
-      setWellnessEntries(localEntries);
+      setWellnessEntries([]);
+      toast.error('Failed to fetch wellness entries');
     } finally {
       setWellnessLoading(false);
     }
@@ -943,30 +960,65 @@ function AppContent() {
     
     try {
       setWellnessLoading(true);
+      console.log('Creating wellness entry for user:', user.id || user._id);
+      console.log('Entry data:', entryData);
       const response = await wellnessJourneyService.createWellnessEntry(user.id || user._id, entryData);
+      console.log('Create wellness entry response:', response);
       setWellnessEntries(prev => [response.entry, ...prev]);
       setShowWellnessForm(false);
-      toast.success('Wellness entry created successfully!');
+      
+      // Award points for wellness check-in
+      const pointsToAdd = 15; // Base points for wellness check-in
+      setLocalProgress(prev => ({
+        ...prev,
+        points: prev.points + pointsToAdd,
+        level: Math.floor((prev.points + pointsToAdd) / 100) + 1
+      }));
+      
+      // Award bonus points for detailed entries
+      let bonusPoints = 0;
+      if (entryData.notes && entryData.notes.length > 50) {
+        bonusPoints += 5;
+      }
+      if (entryData.activities && entryData.activities.length > 0) {
+        bonusPoints += 5;
+      }
+      if (entryData.gratitude && entryData.gratitude.length > 0) {
+        bonusPoints += 3;
+      }
+      if (entryData.selfCareActivities && entryData.selfCareActivities.length > 0) {
+        bonusPoints += 5;
+      }
+      
+      if (bonusPoints > 0) {
+        setLocalProgress(prev => ({
+          ...prev,
+          points: prev.points + bonusPoints,
+          level: Math.floor((prev.points + bonusPoints) / 100) + 1
+        }));
+      }
+      
+      const totalPoints = pointsToAdd + bonusPoints;
+      toast.success(`Wellness entry created! +${totalPoints} points earned!`);
     } catch (error) {
       console.error('Error creating wellness entry:', error);
-      // Fallback to local storage
-      const newEntry = wellnessJourneyService.saveWellnessEntryLocally(entryData);
-      setWellnessEntries(prev => [newEntry, ...prev]);
-      setShowWellnessForm(false);
-      toast.success('Wellness entry saved locally!');
+      toast.error('Failed to create wellness entry');
     } finally {
       setWellnessLoading(false);
     }
   };
 
-  const handleUpdateWellnessEntry = async (entryId, updateData) => {
+  const handleUpdateWellnessEntry = async (updateData) => {
+    if (!editingWellnessEntry) return;
+    
     try {
       setWellnessLoading(true);
-      const response = await wellnessJourneyService.updateWellnessEntry(entryId, updateData);
+      const response = await wellnessJourneyService.updateWellnessEntry(editingWellnessEntry.id, updateData);
       setWellnessEntries(prev => 
-        prev.map(entry => entry.id === entryId ? response.entry : entry)
+        prev.map(entry => entry.id === editingWellnessEntry.id ? response.entry : entry)
       );
       setEditingWellnessEntry(null);
+      setShowWellnessForm(false);
       toast.success('Wellness entry updated successfully!');
     } catch (error) {
       console.error('Error updating wellness entry:', error);
@@ -984,10 +1036,7 @@ function AppContent() {
       toast.success('Wellness entry deleted successfully!');
     } catch (error) {
       console.error('Error deleting wellness entry:', error);
-      // Fallback to local storage
-      wellnessJourneyService.deleteWellnessEntryLocally(entryId);
-      setWellnessEntries(prev => prev.filter(entry => entry.id !== entryId));
-      toast.success('Wellness entry deleted locally!');
+      toast.error('Failed to delete wellness entry');
     } finally {
       setWellnessLoading(false);
     }
@@ -1378,7 +1427,7 @@ function AppContent() {
               ) : (
                 <div className="space-y-6">
                   {/* Enhanced Analytics */}
-                  <EnhancedAnalytics wellnessEntries={wellnessEntries} />
+                  <EnhancedAnalytics wellnessEntries={wellnessEntries} moods={moods} />
                   
                   {/* Wellness Journey Entries */}
                   <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
@@ -1386,9 +1435,12 @@ function AppContent() {
                       <h2 className="text-xl font-bold text-white">Your Wellness Journey</h2>
                       <button
                         onClick={() => setShowWellnessForm(true)}
-                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center"
                       >
-                        Add Entry
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                        Check In
                       </button>
                     </div>
                     
@@ -1749,23 +1801,37 @@ function AppContent() {
         </div>
       </div>
 
-      {/* Settings Modal */}
-      {isSettingsModalOpen && (
-        <Settings 
-          isOpen={isSettingsModalOpen}
-          onClose={() => setIsSettingsModalOpen(false)}
-          customMoodCategories={customMoodCategories}
-          onAddCustomMood={handleAddCustomMood}
-          onRemoveCustomMood={handleRemoveCustomMood}
-          user={user}
-          onLogout={handleLogout}
-          onUpdateUser={(updatedUser) => {
-            setUser(updatedUser);
-            // Update local storage or any other user state
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-          }}
-        />
-      )}
+                          {/* Settings Modal */}
+                    {isSettingsModalOpen && (
+                      <Settings
+                        isOpen={isSettingsModalOpen}
+                        onClose={() => setIsSettingsModalOpen(false)}
+                        customMoodCategories={customMoodCategories}
+                        onAddCustomMood={handleAddCustomMood}
+                        onRemoveCustomMood={handleRemoveCustomMood}
+                        user={user}
+                        onLogout={handleLogout}
+                        onUpdateUser={(updatedUser) => {
+                          setUser(updatedUser);
+                          // Update local storage or any other user state
+                          localStorage.setItem('user', JSON.stringify(updatedUser));
+                        }}
+                      />
+                    )}
+
+                    {/* Wellness Check-In Form Modal */}
+                    {showWellnessForm && (
+                      <WellnessCheckInForm
+                        onSubmit={editingWellnessEntry ? handleUpdateWellnessEntry : handleCreateWellnessEntry}
+                        onCancel={() => {
+                          setShowWellnessForm(false);
+                          setEditingWellnessEntry(null);
+                        }}
+                        isLoading={wellnessLoading}
+                        editingEntry={editingWellnessEntry}
+                        user={user}
+                      />
+                    )}
 
       {/* Insights Modal */}
       {showInsightsModal && currentInsights && (

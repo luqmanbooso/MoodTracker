@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { format, subDays, eachDayOfInterval, isSameDay } from 'date-fns';
 
-const EnhancedAnalytics = ({ wellnessEntries, period = '30d' }) => {
+const EnhancedAnalytics = ({ wellnessEntries, moods = [], period = '30d' }) => {
   const [selectedPeriod, setSelectedPeriod] = useState(period);
   const [viewMode, setViewMode] = useState('overview');
 
@@ -15,20 +15,44 @@ const EnhancedAnalytics = ({ wellnessEntries, period = '30d' }) => {
     );
   }, [wellnessEntries, selectedPeriod]);
 
+  // Filter moods based on selected period
+  const filteredMoods = useMemo(() => {
+    const days = selectedPeriod === '7d' ? 7 : selectedPeriod === '30d' ? 30 : 90;
+    const startDate = subDays(new Date(), days);
+    
+    return moods.filter(mood => 
+      new Date(mood.date) >= startDate
+    );
+  }, [moods, selectedPeriod]);
+
   // Calculate analytics
   const analytics = useMemo(() => {
-    if (filteredEntries.length === 0) return null;
+    const allData = [...filteredEntries, ...filteredMoods];
+    if (allData.length === 0) return null;
 
-    const totalEntries = filteredEntries.length;
-    const averageWellnessScore = filteredEntries.reduce((sum, entry) => sum + entry.wellnessScore, 0) / totalEntries;
+    const totalEntries = allData.length;
+    const wellnessEntries = filteredEntries.length;
+    const moodEntries = filteredMoods.length;
     
-    // Mood distribution
-    const moodDistribution = filteredEntries.reduce((acc, entry) => {
-      acc[entry.mood] = (acc[entry.mood] || 0) + 1;
+    // Calculate average wellness score from both sources
+    const wellnessScores = filteredEntries.map(entry => entry.wellnessScore || 5);
+    const moodScores = filteredMoods.map(mood => {
+      const moodScoreMap = { Great: 9, Good: 7, Okay: 5, Bad: 3, Terrible: 1 };
+      return moodScoreMap[mood.mood] || 5;
+    });
+    
+    const allScores = [...wellnessScores, ...moodScores];
+    const averageWellnessScore = allScores.length > 0 ? 
+      allScores.reduce((sum, score) => sum + score, 0) / allScores.length : 0;
+    
+    // Combined mood distribution
+    const moodDistribution = allData.reduce((acc, entry) => {
+      const mood = entry.mood || 'Unknown';
+      acc[mood] = (acc[mood] || 0) + 1;
       return acc;
     }, {});
 
-    // Activity analysis
+    // Activity analysis from wellness entries
     const activityAnalysis = filteredEntries.reduce((acc, entry) => {
       if (entry.activities) {
         entry.activities.forEach(activity => {
@@ -38,19 +62,37 @@ const EnhancedAnalytics = ({ wellnessEntries, period = '30d' }) => {
       return acc;
     }, {});
 
+    // Add activities from mood entries
+    filteredMoods.forEach(mood => {
+      if (mood.activities) {
+        mood.activities.forEach(activity => {
+          activityAnalysis[activity] = (activityAnalysis[activity] || 0) + 1;
+        });
+      }
+    });
+
     const topActivities = Object.entries(activityAnalysis)
       .sort(([,a], [,b]) => b - a)
       .slice(0, 5)
       .map(([activity, count]) => ({ activity, count }));
 
     // Trend analysis
-    const recentEntries = filteredEntries.slice(-7);
-    const olderEntries = filteredEntries.slice(-14, -7);
+    const recentData = allData.slice(-7);
+    const olderData = allData.slice(-14, -7);
     
-    const recentAvg = recentEntries.length > 0 ? 
-      recentEntries.reduce((sum, entry) => sum + entry.wellnessScore, 0) / recentEntries.length : 0;
-    const olderAvg = olderEntries.length > 0 ? 
-      olderEntries.reduce((sum, entry) => sum + entry.wellnessScore, 0) / olderEntries.length : 0;
+    const recentAvg = recentData.length > 0 ? 
+      recentData.reduce((sum, entry) => {
+        if (entry.wellnessScore) return sum + entry.wellnessScore;
+        const moodScoreMap = { Great: 9, Good: 7, Okay: 5, Bad: 3, Terrible: 1 };
+        return sum + (moodScoreMap[entry.mood] || 5);
+      }, 0) / recentData.length : 0;
+      
+    const olderAvg = olderData.length > 0 ? 
+      olderData.reduce((sum, entry) => {
+        if (entry.wellnessScore) return sum + entry.wellnessScore;
+        const moodScoreMap = { Great: 9, Good: 7, Okay: 5, Bad: 3, Terrible: 1 };
+        return sum + (moodScoreMap[entry.mood] || 5);
+      }, 0) / olderData.length : 0;
     
     const trend = recentAvg > olderAvg ? 'improving' : recentAvg < olderAvg ? 'declining' : 'stable';
     const change = Math.abs(recentAvg - olderAvg).toFixed(1);
@@ -62,7 +104,7 @@ const EnhancedAnalytics = ({ wellnessEntries, period = '30d' }) => {
     
     for (let i = 0; i < 365; i++) {
       const checkDate = subDays(today, i);
-      const hasEntry = filteredEntries.some(entry => 
+      const hasEntry = allData.some(entry => 
         isSameDay(new Date(entry.date), checkDate)
       );
       
@@ -73,8 +115,52 @@ const EnhancedAnalytics = ({ wellnessEntries, period = '30d' }) => {
       }
     }
 
+    // Calculate insights
+    const insights = [];
+    
+    // Consistency insight
+    if (currentStreak >= 7) {
+      insights.push({
+        type: 'positive',
+        message: `Amazing! You've been tracking for ${currentStreak} consecutive days.`,
+        icon: '🔥'
+      });
+    } else if (currentStreak >= 3) {
+      insights.push({
+        type: 'positive',
+        message: `Great consistency! You're on a ${currentStreak}-day streak.`,
+        icon: '📈'
+      });
+    }
+
+    // Trend insight
+    if (trend === 'improving') {
+      insights.push({
+        type: 'positive',
+        message: 'Your wellness is improving! Keep up the great work.',
+        icon: '🚀'
+      });
+    } else if (trend === 'declining') {
+      insights.push({
+        type: 'improvement',
+        message: 'I notice some challenges. Consider adding more self-care activities.',
+        icon: '💪'
+      });
+    }
+
+    // Activity insight
+    if (topActivities.length > 0) {
+      insights.push({
+        type: 'info',
+        message: `Your most common activity is ${topActivities[0].activity}.`,
+        icon: '🎯'
+      });
+    }
+
     return {
       totalEntries,
+      wellnessEntries,
+      moodEntries,
       averageWellnessScore: averageWellnessScore.toFixed(1),
       moodDistribution,
       topActivities,
@@ -82,9 +168,10 @@ const EnhancedAnalytics = ({ wellnessEntries, period = '30d' }) => {
       change,
       currentStreak,
       recentAverage: recentAvg.toFixed(1),
-      olderAverage: olderAvg.toFixed(1)
+      olderAverage: olderAvg.toFixed(1),
+      insights
     };
-  }, [filteredEntries]);
+  }, [filteredEntries, filteredMoods]);
 
   // Generate calendar data
   const calendarData = useMemo(() => {
@@ -95,13 +182,23 @@ const EnhancedAnalytics = ({ wellnessEntries, period = '30d' }) => {
     const daysArray = eachDayOfInterval({ start: startDate, end: endDate });
     
     return daysArray.map(day => {
-      const entry = filteredEntries.find(entry => 
+      const wellnessEntry = filteredEntries.find(entry => 
         isSameDay(new Date(entry.date), day)
       );
+      const moodEntry = filteredMoods.find(mood => 
+        isSameDay(new Date(mood.date), day)
+      );
+      
+      // Combine data from both sources
+      const entry = wellnessEntry || moodEntry;
+      const hasWellnessEntry = !!wellnessEntry;
+      const hasMoodEntry = !!moodEntry;
       
       return {
         date: day,
         hasEntry: !!entry,
+        hasWellnessEntry,
+        hasMoodEntry,
         wellnessScore: entry?.wellnessScore || 0,
         mood: entry?.mood || null
       };

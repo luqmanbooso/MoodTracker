@@ -91,44 +91,7 @@ export const getWellnessStats = async (userId) => {
   }
 };
 
-// Local storage fallback for offline functionality
-export const saveWellnessEntryLocally = (entry) => {
-  try {
-    const existingEntries = JSON.parse(localStorage.getItem('wellnessEntries') || '[]');
-    const newEntry = {
-      ...entry,
-      id: Date.now().toString(),
-      date: new Date().toISOString()
-    };
-    existingEntries.unshift(newEntry);
-    localStorage.setItem('wellnessEntries', JSON.stringify(existingEntries));
-    return newEntry;
-  } catch (error) {
-    console.error('Error saving wellness entry locally:', error);
-    throw new Error('Failed to save wellness entry locally');
-  }
-};
 
-export const getWellnessEntriesLocally = () => {
-  try {
-    return JSON.parse(localStorage.getItem('wellnessEntries') || '[]');
-  } catch (error) {
-    console.error('Error getting wellness entries locally:', error);
-    return [];
-  }
-};
-
-export const deleteWellnessEntryLocally = (entryId) => {
-  try {
-    const existingEntries = JSON.parse(localStorage.getItem('wellnessEntries') || '[]');
-    const updatedEntries = existingEntries.filter(entry => entry.id !== entryId);
-    localStorage.setItem('wellnessEntries', JSON.stringify(updatedEntries));
-    return true;
-  } catch (error) {
-    console.error('Error deleting wellness entry locally:', error);
-    throw new Error('Failed to delete wellness entry locally');
-  }
-};
 
 export default {
   getWellnessJourney,
@@ -136,8 +99,5 @@ export default {
   updateWellnessEntry,
   deleteWellnessEntry,
   getWellnessAnalytics,
-  getWellnessStats,
-  saveWellnessEntryLocally,
-  getWellnessEntriesLocally,
-  deleteWellnessEntryLocally
+  getWellnessStats
 }; 
