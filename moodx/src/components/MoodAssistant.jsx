@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import aiService from '../services/aiService.js';
 
-const MoodAssistant = ({ moods, habits, goals, setView, expanded = false, fullPage = false }) => {
+const MoodAssistant = ({ moods, habits, goals, setView }) => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -36,7 +36,7 @@ const MoodAssistant = ({ moods, habits, goals, setView, expanded = false, fullPa
         setCanExit(false);
         setInteractionCount(0);
         
-        // Generate personalized intervention message based on actual data
+        // Generate personalized intervention message
         const generateInterventionMessage = async () => {
           try {
             const userContext = {
@@ -149,43 +149,18 @@ What would you like to talk about first?`,
   };
 
   const handleQuickAction = (action) => {
-    switch(action) {
-      case 'stress':
-        setInputMessage("I'm feeling stressed and overwhelmed. Can you help me with some immediate coping strategies?");
-        break;
-      case 'sleep':
-        setInputMessage("I'm having trouble sleeping. What can I do to improve my sleep quality?");
-        break;
-      case 'motivation':
-        setInputMessage("I'm struggling with motivation and feeling stuck. How can I get back on track?");
-        break;
-      case 'anxiety':
-        setInputMessage("I'm experiencing anxiety and worry. Can you help me manage these feelings?");
-        break;
-      case 'depression':
-        setInputMessage("I'm feeling down and hopeless. What can I do to improve my mood?");
-        break;
-      case 'insights':
-        setView('insights');
-        break;
-      default:
-        setInputMessage(action);
-    }
-  };
-
-  const handleTopicClick = (topic) => {
-    const topicMessages = {
+    const actionMessages = {
       'stress': "I'm feeling stressed and overwhelmed. Can you help me with some immediate coping strategies?",
       'sleep': "I'm having trouble sleeping. What can I do to improve my sleep quality?",
       'motivation': "I'm struggling with motivation and feeling stuck. How can I get back on track?",
       'anxiety': "I'm experiencing anxiety and worry. Can you help me manage these feelings?",
       'depression': "I'm feeling down and hopeless. What can I do to improve my mood?",
+      'self-care': "I need help with self-care. What activities would be good for me right now?",
       'relationships': "I'm having relationship issues. Can you help me navigate this?",
-      'work': "I'm struggling with work-related stress. How can I manage this better?",
-      'self-care': "I need help with self-care. What activities would be good for me right now?"
+      'work': "I'm struggling with work-related stress. How can I manage this better?"
     };
     
-    setInputMessage(topicMessages[topic] || topic);
+    setInputMessage(actionMessages[action] || action);
   };
 
   const handleExit = () => {
@@ -206,46 +181,39 @@ Could we continue for just a few more minutes? Your mental health is important, 
   };
 
   // Full page layout
-  if (fullPage) {
-    return (
-      <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        {/* Header */}
-        <div className="flex-shrink-0 p-6 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="relative">
-                <div className="w-4 h-4 bg-emerald-400 rounded-full animate-pulse"></div>
-                <div className="absolute inset-0 w-4 h-4 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-white">AI Wellness Coach</h2>
-                <p className="text-sm text-slate-400">
-                  {needsIntervention ? 'Your wellness ally - here to help' : 'Your personal mental health companion'}
-                </p>
-              </div>
-              {needsIntervention && (
-                <div className="flex items-center space-x-2 bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-1">
-                  <span className="text-amber-400 text-sm">
-                    ⚠️ Intervention Active ({interactionCount}/5)
-                  </span>
-                </div>
-              )}
+  return (
+    <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Header */}
+      <div className="flex-shrink-0 p-6 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xl">🤖</span>
             </div>
-            <button
-              onClick={handleExit}
-              className={`p-2 rounded-xl transition-all duration-200 ${
-                needsIntervention && !canExit 
-                  ? 'text-amber-400 hover:text-amber-300 hover:bg-amber-500/20' 
-                  : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-              }`}
-              title={needsIntervention && !canExit ? `Complete ${5 - interactionCount} more interactions to exit` : 'Exit chat'}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-white">AI Wellness Coach</h1>
+              <p className="text-sm text-slate-400">
+                {needsIntervention ? 'Your wellness ally - here to help' : 'Your personal mental health companion'}
+              </p>
+            </div>
+            {needsIntervention && (
+              <div className="flex items-center space-x-2 bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-1">
+                <span className="text-amber-400 text-sm">
+                  ⚠️ Intervention Active ({interactionCount}/5)
+                </span>
+              </div>
+            )}
           </div>
+          <button
+            onClick={() => setView('dashboard')}
+            className="p-3 rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors"
+          >
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
+      </div>
 
         {/* Main Content Area */}
         <div className="flex-1 flex">
@@ -264,32 +232,37 @@ Could we continue for just a few more minutes? Your mental health is important, 
               ) : (
                 <div className="space-y-6 pb-4">
                   {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
+                    <div key={message.id}>
                       <div
-                        className={`max-w-2xl px-6 py-4 rounded-2xl shadow-lg ${
-                          message.type === 'user'
-                            ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
-                            : 'bg-slate-700/50 backdrop-blur-sm text-slate-100 border border-slate-600/50'
-                        }`}
+                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
-                        <p className="whitespace-pre-wrap leading-relaxed text-base">{message.content}</p>
-                        {message.suggestions && message.suggestions.length > 0 && (
-                          <div className="mt-4 space-y-2">
-                            {message.suggestions.map((suggestion, index) => (
+                        <div
+                          className={`max-w-2xl px-6 py-4 rounded-2xl shadow-lg ${
+                            message.type === 'user'
+                              ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
+                              : 'bg-slate-700/50 backdrop-blur-sm text-slate-100 border border-slate-600/50'
+                          }`}
+                        >
+                          <p className="whitespace-pre-wrap leading-relaxed text-base">{message.content}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Suggestions - Always left-aligned */}
+                      {message.suggestions && message.suggestions.length > 0 && (
+                        <div className="flex justify-start mt-3">
+                          <div className="flex flex-wrap gap-2 max-w-2xl">
+                            {message.suggestions.slice(0, 4).map((suggestion, index) => (
                               <button
                                 key={index}
                                 onClick={() => handleSuggestionClick(suggestion)}
-                                className="block w-full text-left text-sm bg-slate-600/50 hover:bg-slate-500/50 rounded-xl px-4 py-2 transition-all duration-200 hover:scale-105"
+                                className="text-sm bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-300 hover:text-emerald-200 rounded-lg px-4 py-2 transition-all duration-200 font-medium"
                               >
                                 {suggestion}
                               </button>
                             ))}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                   
@@ -312,8 +285,50 @@ Could we continue for just a few more minutes? Your mental health is important, 
               <div ref={messagesEndRef} className="pb-4" />
             </div>
 
+            {/* Quick Actions */}
+            <div className="p-4 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleQuickAction('stress')}
+                  className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 hover:border-red-500/50 text-red-300 hover:text-red-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                >
+                  😰 Stress Help
+                </button>
+                <button
+                  onClick={() => handleQuickAction('sleep')}
+                  className="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 hover:text-blue-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                >
+                  😴 Sleep Tips
+                </button>
+                <button
+                  onClick={() => handleQuickAction('motivation')}
+                  className="px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 hover:border-yellow-500/50 text-yellow-300 hover:text-yellow-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                >
+                  💪 Motivation
+                </button>
+                <button
+                  onClick={() => handleQuickAction('anxiety')}
+                  className="px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 hover:border-purple-500/50 text-purple-300 hover:text-purple-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                >
+                  😰 Anxiety
+                </button>
+                <button
+                  onClick={() => handleQuickAction('depression')}
+                  className="px-3 py-2 bg-gray-500/20 hover:bg-gray-500/30 border border-gray-500/30 hover:border-gray-500/50 text-gray-300 hover:text-gray-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                >
+                  😔 Depression
+                </button>
+                <button
+                  onClick={() => handleQuickAction('self-care')}
+                  className="px-3 py-2 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/30 hover:border-pink-500/50 text-pink-300 hover:text-pink-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                >
+                  🧘 Self-Care
+                </button>
+              </div>
+            </div>
+
             {/* Input Area */}
-            <div className="flex-shrink-0 p-6 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+            <div className="p-4 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
               <form onSubmit={handleSubmit} className="flex space-x-4">
                 <div className="flex-1 relative">
                   <input
@@ -338,176 +353,10 @@ Could we continue for just a few more minutes? Your mental health is important, 
               </form>
             </div>
           </div>
-
-          {/* Sidebar - Only show when no messages */}
-          {messages.length === 0 && (
-            <div className="w-80 border-l border-slate-700/50 bg-slate-800/20 backdrop-blur-sm overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-              {/* Quick Actions */}
-              <div className="p-6">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4">Quick Actions</h3>
-                <div className="space-y-3">
-                  {[
-                    { action: 'stress', label: 'Stress Relief', icon: '🧘‍♀️' },
-                    { action: 'sleep', label: 'Sleep Quality', icon: '😴' },
-                    { action: 'motivation', label: 'Motivation', icon: '🌟' },
-                    { action: 'anxiety', label: 'Anxiety', icon: '🧠' },
-                    { action: 'depression', label: 'Depression', icon: '💆‍♀️' },
-                    { action: 'insights', label: 'Get Insights', icon: '📊' }
-                  ].map((item) => (
-                    <button
-                      key={item.action}
-                      onClick={() => handleQuickAction(item.action)}
-                      className="w-full flex items-center p-4 bg-slate-700/50 hover:bg-slate-600/50 rounded-xl text-sm transition-all duration-200 hover:scale-105 border border-slate-600/30"
-                    >
-                      <span className="mr-3 text-lg">{item.icon}</span>
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Wellness Topics */}
-              <div className="p-6 border-t border-slate-700/50">
-                <h3 className="text-sm font-semibold text-slate-300 mb-4">Wellness Topics</h3>
-                <div className="space-y-3">
-                  {['stress', 'sleep', 'motivation', 'anxiety', 'depression', 'relationships', 'work', 'self-care'].map((topic) => (
-                    <button
-                      key={topic}
-                      onClick={() => handleTopicClick(topic)}
-                      className="w-full p-4 bg-slate-700/50 hover:bg-slate-600/50 rounded-xl text-left transition-all duration-200 hover:scale-105 border border-slate-600/30"
-                    >
-                      <div className="flex items-center mb-2">
-                        <span className="text-2xl mr-3">{topic === 'stress' ? '🧘‍♀️' : topic === 'sleep' ? '😴' : topic === 'motivation' ? '🌟' : topic === 'anxiety' ? '🧠' : topic === 'depression' ? '💆‍♀️' : topic === 'relationships' ? '👥' : topic === 'work' ? '💼' : '💆‍♀️'}</span>
-                        <span className="text-sm font-medium text-white">{topic.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
-                      </div>
-                      <p className="text-xs text-slate-400 leading-relaxed">
-                        {topic === 'stress' ? 'Learn effective stress relief techniques' : topic === 'sleep' ? 'Improve your sleep and rest' : topic === 'motivation' ? 'Natural ways to lift your spirits' : topic === 'anxiety' ? 'Practice present-moment awareness' : topic === 'depression' ? 'Prioritize your wellbeing' : topic === 'relationships' ? 'Learn to navigate relationship challenges' : topic === 'work' ? 'Manage work-related stress' : 'Prioritize your wellbeing'}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     );
-  }
 
-  // Compact layout
-  const containerClass = expanded 
-    ? "h-96 flex flex-col bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700 shadow-2xl" 
-    : "h-64 flex flex-col bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl border border-slate-700 shadow-2xl";
-
-  return (
-    <div className={containerClass}>
-      {/* Header */}
-      <div className="p-4 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
-              <div className="absolute inset-0 w-3 h-3 bg-emerald-400 rounded-full animate-ping opacity-75"></div>
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-white">AI Wellness Coach</h2>
-              <p className="text-xs text-slate-400">
-                {needsIntervention ? 'Wellness ally' : 'Mental health companion'}
-              </p>
-            </div>
-            {needsIntervention && (
-              <div className="bg-amber-500/20 border border-amber-500/30 rounded px-2 py-1">
-                <span className="text-amber-400 text-xs">⚠️</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-        {messages.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center text-slate-400">
-              <div className="text-4xl mb-2">💬</div>
-              <p className="text-sm">Start a conversation</p>
-            </div>
-          </div>
-        )}
-        
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-xs px-4 py-3 rounded-xl shadow-lg ${
-                message.type === 'user'
-                  ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
-                  : 'bg-slate-700/50 backdrop-blur-sm text-slate-100 border border-slate-600/50'
-              }`}
-            >
-              <p className="whitespace-pre-wrap leading-relaxed text-sm">{message.content}</p>
-              {message.suggestions && message.suggestions.length > 0 && (
-                <div className="mt-3 space-y-1">
-                  {message.suggestions.slice(0, 2).map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      className="block w-full text-left text-xs bg-slate-600/50 hover:bg-slate-500/50 rounded-lg px-3 py-1 transition-all duration-200"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-        
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-slate-700/50 backdrop-blur-sm text-slate-100 px-4 py-3 rounded-xl border border-slate-600/50">
-              <div className="flex items-center space-x-2">
-                <div className="flex space-x-1">
-                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce"></div>
-                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-                <span className="text-xs">AI is thinking...</span>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} className="pb-4" />
-      </div>
-
-      {/* Input Area */}
-      <div className="p-4 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
-        <form onSubmit={handleSubmit} className="flex space-x-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            placeholder={needsIntervention ? "I'm here to help..." : "Ask me anything..."}
-            className="flex-1 px-4 py-2 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all duration-200 backdrop-blur-sm text-sm"
-            disabled={isLoading}
-          />
-          <button
-            type="submit"
-            disabled={!inputMessage.trim() || isLoading}
-            className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium rounded-xl transition-all duration-200 hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-          </button>
-        </form>
-      </div>
-    </div>
-  );
 };
 
 export default MoodAssistant;

@@ -17,18 +17,25 @@ import HabitBuilder from './components/HabitBuilder';
 import GoalTracker from './components/GoalTracker';
 import MoodAssistant from './components/MoodAssistant';
 import Settings from './components/Settings';
+import EnhancedAnalytics from './components/EnhancedAnalytics';
+import WellnessJourneyEntry from './components/WellnessJourneyEntry';
 import TodoList from './components/TodoList.jsx';
 import RecommendationSelector from './components/RecommendationSelector.jsx';
 import ProgressSystem from './components/ProgressSystem.jsx';
+import DynamicGreeting from './components/DynamicGreeting.jsx';
+import FocusSession from './components/FocusSession.jsx';
+import MoodCalendar from './components/MoodCalendar.jsx';
+import PointsSystem from './components/PointsSystem.jsx';
 
 
 import React from 'react';
 
-import FloatingChatButton from './components/FloatingChatButton';
+
 import Login from './components/Login';
 import Register from './components/Register';
 import { aiService } from './services/aiService.js';
 import authService from './services/authService.js';
+import wellnessJourneyService from './services/wellnessJourneyService.js';
 
 // Main App component wrapper with ThemeProvider
 function AppWithTheme() {
@@ -81,6 +88,14 @@ function AppContent() {
   const [currentInsights, setCurrentInsights] = useState(null);
   const [showRecommendationSelector, setShowRecommendationSelector] = useState(false);
   const [currentRecommendations, setCurrentRecommendations] = useState([]);
+  const [currentMood, setCurrentMood] = useState(null);
+  const [showCalendar, setShowCalendar] = useState(false);
+  
+  // Wellness Journey state
+  const [wellnessEntries, setWellnessEntries] = useState([]);
+  const [wellnessLoading, setWellnessLoading] = useState(false);
+  const [showWellnessForm, setShowWellnessForm] = useState(false);
+  const [editingWellnessEntry, setEditingWellnessEntry] = useState(null);
 
   
   const streak = computeStreak();
@@ -131,6 +146,7 @@ function AppContent() {
     if (isAuthenticated) {
       fetchMoods();
       fetchTodos();
+      fetchWellnessEntries();
     }
   }, [isAuthenticated]);
 
@@ -894,6 +910,94 @@ function AppContent() {
     }
   };
 
+  const handleMoodSelect = (mood) => {
+    setCurrentMood(mood);
+    // You can add logic here to automatically log the mood or show the mood form
+  };
+
+  const handleCalendarDateClick = (date) => {
+    // Handle calendar date click - could open mood form for that date
+    console.log('Calendar date clicked:', date);
+  };
+
+  // Wellness Journey functions
+  const fetchWellnessEntries = async () => {
+    if (!user) return;
+    
+    try {
+      setWellnessLoading(true);
+      const response = await wellnessJourneyService.getWellnessJourney(user.id || user._id);
+      setWellnessEntries(response.entries || []);
+    } catch (error) {
+      console.error('Error fetching wellness entries:', error);
+      // Fallback to local storage
+      const localEntries = wellnessJourneyService.getWellnessEntriesLocally();
+      setWellnessEntries(localEntries);
+    } finally {
+      setWellnessLoading(false);
+    }
+  };
+
+  const handleCreateWellnessEntry = async (entryData) => {
+    if (!user) return;
+    
+    try {
+      setWellnessLoading(true);
+      const response = await wellnessJourneyService.createWellnessEntry(user.id || user._id, entryData);
+      setWellnessEntries(prev => [response.entry, ...prev]);
+      setShowWellnessForm(false);
+      toast.success('Wellness entry created successfully!');
+    } catch (error) {
+      console.error('Error creating wellness entry:', error);
+      // Fallback to local storage
+      const newEntry = wellnessJourneyService.saveWellnessEntryLocally(entryData);
+      setWellnessEntries(prev => [newEntry, ...prev]);
+      setShowWellnessForm(false);
+      toast.success('Wellness entry saved locally!');
+    } finally {
+      setWellnessLoading(false);
+    }
+  };
+
+  const handleUpdateWellnessEntry = async (entryId, updateData) => {
+    try {
+      setWellnessLoading(true);
+      const response = await wellnessJourneyService.updateWellnessEntry(entryId, updateData);
+      setWellnessEntries(prev => 
+        prev.map(entry => entry.id === entryId ? response.entry : entry)
+      );
+      setEditingWellnessEntry(null);
+      toast.success('Wellness entry updated successfully!');
+    } catch (error) {
+      console.error('Error updating wellness entry:', error);
+      toast.error('Failed to update wellness entry');
+    } finally {
+      setWellnessLoading(false);
+    }
+  };
+
+  const handleDeleteWellnessEntry = async (entryId) => {
+    try {
+      setWellnessLoading(true);
+      await wellnessJourneyService.deleteWellnessEntry(entryId);
+      setWellnessEntries(prev => prev.filter(entry => entry.id !== entryId));
+      toast.success('Wellness entry deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting wellness entry:', error);
+      // Fallback to local storage
+      wellnessJourneyService.deleteWellnessEntryLocally(entryId);
+      setWellnessEntries(prev => prev.filter(entry => entry.id !== entryId));
+      toast.success('Wellness entry deleted locally!');
+    } finally {
+      setWellnessLoading(false);
+    }
+  };
+
+  const handleEditWellnessEntry = (entry) => {
+    setEditingWellnessEntry(entry);
+    setShowWellnessForm(true);
+  };
+
   const latestMood = moods.length > 0 ? {
     mood: moods[0].mood,
     time: new Date(moods[0].date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -973,323 +1077,138 @@ function AppContent() {
           
           {/* Views */}
           {view === 'dashboard' && (
-  <>
-    {/* Wellness Overview - Health Companion Focus */}
-    <div className="mb-6 rounded-xl bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border border-gray-700 shadow-lg overflow-hidden">
-      <div className="p-6 md:p-8">
-        <div className="flex flex-col md:flex-row justify-between items-start">
-          <div className="md:w-2/3 mb-6 md:mb-0">
-            <div className="flex items-center mb-3">
-              <div className="w-3 h-3 bg-emerald-500 rounded-full mr-3 animate-pulse"></div>
-              <span className="text-emerald-400 text-sm font-medium">Your Wellness Companion</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-3 text-white">
-              How's your mental health today?
-            </h1>
-            <p className="text-lg mb-4 text-gray-300">
-              Track your emotional wellbeing, build healthy habits, and get personalized insights.
-            </p>
-            
-            <div className="flex flex-wrap gap-3 mt-4">
-              <button
-                onClick={() => setShowMoodForm(true)}
-                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg flex items-center shadow-sm transition-all font-medium"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Check In
-              </button>
-              
-              {streak > 0 && (
-                <div className="px-4 py-3 bg-gray-800/70 rounded-lg flex items-center shadow-sm border border-gray-600">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                  </svg>
-                  <span className="font-medium text-white">
-                    {streak} Day Wellness Streak
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Wellness Score & Daily Inspiration */}
-          <div className="md:w-1/3 space-y-4">
-            {/* Wellness Score */}
-            <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-300">Wellness Score</span>
-                                    <span className="text-2xl font-bold text-emerald-400">{localProgress.points}</span>
-              </div>
-              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-emerald-500 transition-all duration-500"
-                  style={{ width: `${Math.round((localProgress.points % 100) / 100 * 100)}%` }}
-                ></div>
-              </div>
-                              <p className="text-xs text-gray-400 mt-1">Level {localProgress.level} • {100 - (localProgress.points % 100)} to next level</p>
-            </div>
-            
-            {/* Daily Inspiration */}
-            <div className="p-4 rounded-lg bg-gray-800/50 border border-gray-700">
-              <span className="text-sm font-medium text-emerald-400 block mb-2">Daily Wellness Tip</span>
-              <DailyQuote compact={true} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            <>
+              {/* Dynamic Greeting */}
+              <DynamicGreeting 
+                user={user}
+                currentMood={currentMood}
+                onMoodSelect={handleMoodSelect}
+              />
 
-    {/* Quick Wellness Check */}
-    <div className="mb-6 p-6 rounded-xl bg-gray-800 border border-gray-700 shadow-md">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white">
-          Quick Wellness Check
-        </h2>
-        <span className="text-sm text-gray-400">How are you feeling right now?</span>
-      </div>
-      <div className="grid grid-cols-5 gap-3">
-        {[
-          {mood: 'Thriving', emoji: '😊', intensity: 10, color: 'emerald', description: 'Feeling great'},
-          {mood: 'Good', emoji: '🙂', intensity: 7, color: 'green', description: 'Doing well'},
-          {mood: 'Okay', emoji: '😐', intensity: 5, color: 'yellow', description: 'Neutral'},
-          {mood: 'Struggling', emoji: '😔', intensity: 3, color: 'orange', description: 'Having a hard time'},
-          {mood: 'Overwhelmed', emoji: '😞', intensity: 1, color: 'red', description: 'Need support'}
-        ].map((item) => (
-          <button
-            key={item.mood}
-            onClick={() => handleAddMood({ 
-              mood: item.mood,
-              customMood: '',
-              intensity: item.intensity,
-              note: '',
-              activities: [],
-              tags: []
-            })}
-            className={`p-4 rounded-lg flex flex-col items-center justify-center transition-all border border-gray-700 hover:bg-${item.color}-900/20 hover:border-${item.color}-500 group`}
-          >
-            <span className="text-3xl mb-2 group-hover:scale-110 transition-transform">{item.emoji}</span>
-            <span className="text-sm font-medium text-gray-300 mb-1">{item.mood}</span>
-            <span className="text-xs text-gray-500 text-center">{item.description}</span>
-          </button>
-        ))}
-      </div>
-      <button
-        onClick={() => setShowMoodForm(true)}
-        className="mt-4 w-full py-3 text-emerald-400 hover:bg-emerald-900/10 rounded-lg text-center text-sm font-medium border border-gray-700 hover:border-emerald-500 transition-colors"
-      >
-        Need more detail? Share your full wellness story
-      </button>
-    </div>
+              {/* Main Dashboard Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                {/* Focus Session */}
+                <div className="lg:col-span-1">
+                  <FocusSession />
+                </div>
 
-    {/* Wellness Dashboard Grid */}
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      {/* Main Wellness Chart */}
-      <div className="lg:col-span-2">
-        {moods.length > 0 ? (
-          <div className="rounded-xl shadow-md bg-gray-800 border-gray-700 border overflow-hidden">
-            <div className="p-5 border-b border-gray-700 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-white">
-                Your Wellness Journey
-              </h2>
-              <button 
-                onClick={() => setView('insights')}
-                className="text-sm text-emerald-400 hover:text-emerald-300 flex items-center"
-              >
-                Deep Insights
-                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-5">
-              <MoodChart moods={moods} simplified={true} />
-            </div>
-          </div>
-        ) : (
-          <div className="p-8 rounded-xl shadow-md bg-gray-800 border-gray-700 border text-center">
-            <div className="mb-6 inline-flex p-4 rounded-full bg-gray-700">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-14 w-14 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-2xl font-medium mb-3 text-white">
-              Start Your Wellness Journey
-            </h3>
-            <p className="text-gray-300 max-w-md mx-auto mb-6">
-              Begin tracking your mental health to discover patterns and get personalized wellness insights.
-            </p>
-            <button
-              onClick={() => setShowMoodForm(true)}
-              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors inline-flex items-center font-medium text-lg"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Begin Tracking
-            </button>
-          </div>
-        )}
-      </div>
-      
-      {/* Wellness Insights Sidebar */}
-      <div className="space-y-6">
-        {/* Wellness Stats */}
-        <div className="p-6 rounded-xl shadow-md bg-gray-800 border-gray-700 border">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-white">
-              Wellness Stats
-            </h2>
-            <button
-              onClick={() => setView('progress')}
-              className="text-sm text-emerald-400 hover:text-emerald-300"
-            >
-              View All →
-            </button>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 rounded bg-gray-700">
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                {/* Points System */}
+                <div className="lg:col-span-1">
+                  <PointsSystem 
+                    points={localProgress.points}
+                    streaks={{ moodStreak: streak }}
+                    level={localProgress.level}
+                    achievements={[]}
+                  />
                 </div>
-                <span className="text-gray-300">Check-ins</span>
-              </div>
-              <span className="text-xl font-bold text-white">{moods.length}</span>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 rounded bg-gray-700">
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                  </svg>
-                </div>
-                <span className="text-gray-300">Streak</span>
-              </div>
-              <span className="text-xl font-bold text-white">{streak}</span>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 rounded bg-gray-700">
-              <div className="flex items-center">
-                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <span className="text-gray-300">Wellness Score</span>
-              </div>
-                              <span className="text-xl font-bold text-white">{localProgress.points}</span>
-            </div>
-          </div>
-        </div>
-        
-        {/* Personalized Todo List */}
-        <TodoList 
-          todos={todos}
-          moods={moods}
-          habits={habits}
-          goals={goals}
-          wellnessScore={moods.length > 0 ? calculateWellnessScore(moods[0]) : 5}
-          setView={setView}
-          onTodoComplete={handleCompleteTodo}
-        />
-        
-        {/* Recent Wellness Check-ins */}
-        {moods.length > 0 && (
-          <div className="rounded-xl shadow-md bg-gray-800 border-gray-700 border overflow-hidden">
-            <div className="p-4 border-b border-gray-700">
-              <h2 className="font-bold text-white flex items-center">
-                <span className="mr-2">📊</span> Recent Check-ins
-              </h2>
-            </div>
-            <div className="divide-y divide-gray-700">
-              {moods.slice(0, 3).map((mood, index) => (
-                <div key={mood._id || index} className="p-4 hover:bg-gray-700/50 transition-colors">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center">
-                      <span className="text-2xl mr-3">
-                        {mood.mood === 'Thriving' ? '😊' : 
-                         mood.mood === 'Good' ? '🙂' : 
-                         mood.mood === 'Okay' ? '😐' : 
-                         mood.mood === 'Struggling' ? '😔' : '😞'}
-                      </span>
-                      <div>
-                        <div className="font-medium text-white">{mood.mood}</div>
-                        <div className="text-sm text-gray-400">
-                          {new Date(mood.date).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-emerald-400">
-                        {mood.intensity}/10
-                      </div>
-                      <div className="text-xs text-gray-500">Intensity</div>
+
+                {/* Quick Actions */}
+                <div className="lg:col-span-1">
+                  <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl p-6">
+                    <h2 className="text-xl font-bold text-white mb-4">Quick Actions</h2>
+                    
+                    <div className="space-y-3">
+                      <button
+                        onClick={() => setShowMoodForm(true)}
+                        className="w-full p-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center space-x-3"
+                      >
+                        <span className="text-2xl">📝</span>
+                        <span className="font-medium">Log Mood</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => setView('chat')}
+                        className="w-full p-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center space-x-3"
+                      >
+                        <span className="text-2xl">💬</span>
+                        <span className="font-medium">AI Coach</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => setShowCalendar(!showCalendar)}
+                        className="w-full p-4 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center space-x-3"
+                      >
+                        <span className="text-2xl">📅</span>
+                        <span className="font-medium">View Calendar</span>
+                      </button>
+                      
+                      <button
+                        onClick={() => setView('insights')}
+                        className="w-full p-4 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-xl transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center space-x-3"
+                      >
+                        <span className="text-2xl">📊</span>
+                        <span className="font-medium">View Insights</span>
+                      </button>
                     </div>
                   </div>
-                  {mood.note && (
-                    <p className="text-sm text-gray-300 mt-2 line-clamp-2">
-                      "{mood.note}"
-                    </p>
-                  )}
                 </div>
-              ))}
-            </div>
-            {moods.length > 3 && (
-              <div className="px-4 py-3 border-t border-gray-700">
-                <button 
-                  onClick={() => setView('log')}
-                  className="w-full text-center text-sm text-emerald-400 hover:text-emerald-300"
-                >
-                  View all check-ins →
-                </button>
               </div>
-            )}
-          </div>
-        )}
-        
-        {/* Quick Actions */}
-        <div className="p-6 rounded-xl shadow-md bg-gray-800 border-gray-700 border">
-          <h2 className="text-lg font-bold text-white mb-4">Quick Actions</h2>
-          <div className="space-y-3">
-            <button
-              onClick={() => setView('chat')}
-              className="w-full p-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-left flex items-center transition-colors"
-            >
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              Talk to Wellness Coach
-            </button>
-            <button
-              onClick={() => setView('insights')}
-              className="w-full p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-left flex items-center transition-colors"
-            >
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              View Insights
-            </button>
-            <button
-              onClick={() => setView('progress')}
-              className="w-full p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white text-left flex items-center transition-colors"
-            >
-              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              Track Progress
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </>
-)}
+
+              {/* Calendar Section */}
+              {showCalendar && (
+                <div className="mb-6">
+                  <MoodCalendar 
+                    moods={moods}
+                    onDateClick={handleCalendarDateClick}
+                    points={localProgress.points}
+                    streaks={{ moodStreak: streak }}
+                  />
+                </div>
+              )}
+
+              {/* Recent Activity & Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                {/* Recent Moods */}
+                <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl p-6">
+                  <h2 className="text-xl font-bold text-white mb-4">Recent Moods</h2>
+                  {moods.slice(0, 5).map((mood, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-slate-700 rounded-lg mb-2">
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-3 h-3 rounded-full ${
+                          mood.mood === 'thriving' ? 'bg-emerald-500' :
+                          mood.mood === 'good' ? 'bg-green-500' :
+                          mood.mood === 'neutral' ? 'bg-yellow-500' :
+                          mood.mood === 'struggling' ? 'bg-orange-500' :
+                          'bg-red-500'
+                        }`}></div>
+                        <span className="text-white font-medium capitalize">{mood.mood}</span>
+                      </div>
+                      <span className="text-sm text-slate-400">
+                        {new Date(mood.timestamp).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Wellness Stats */}
+                <div className="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl p-6">
+                  <h2 className="text-xl font-bold text-white mb-4">Wellness Stats</h2>
+                  
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-300">Current Streak</span>
+                      <span className="text-emerald-400 font-bold">{streak} days</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-300">Total Points</span>
+                      <span className="text-blue-400 font-bold">{localProgress.points}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-300">Current Level</span>
+                      <span className="text-purple-400 font-bold">{localProgress.level}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-slate-300">Moods Logged</span>
+                      <span className="text-orange-400 font-bold">{moods.length}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
           
           {view === 'log' && (
             <div className="animate-fade-in">
@@ -1437,7 +1356,7 @@ function AppContent() {
                 <p className="text-blue-100 opacity-90">Discover patterns, understand triggers, and gain deeper insights into your mental health journey.</p>
               </div>
 
-              {moods.length === 0 ? (
+              {wellnessEntries.length === 0 && moods.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="mb-6 inline-flex p-4 rounded-full bg-gray-700">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1458,65 +1377,116 @@ function AppContent() {
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {/* Wellness Trends Overview */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2">
-                      <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
-                        <div className="p-5 border-b border-gray-700 bg-gray-800/50">
-                          <h2 className="text-xl font-bold text-white flex items-center">
-                            <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-2 rounded-lg mr-3">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                              </svg>
-                            </span>
-                            Wellness Trends
-                          </h2>
-                        </div>
-                        <div className="p-6">
-                          <MoodChart moods={moods} />
-                        </div>
-                      </div>
+                  {/* Enhanced Analytics */}
+                  <EnhancedAnalytics wellnessEntries={wellnessEntries} />
+                  
+                  {/* Wellness Journey Entries */}
+                  <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-bold text-white">Your Wellness Journey</h2>
+                      <button
+                        onClick={() => setShowWellnessForm(true)}
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                      >
+                        Add Entry
+                      </button>
                     </div>
                     
-                    <div>
-                      <MoodStats moods={moods} />
-                    </div>
+                    {wellnessLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-400"></div>
+                        <span className="ml-3 text-gray-300">Loading wellness entries...</span>
+                      </div>
+                    ) : wellnessEntries.length === 0 ? (
+                      <div className="text-center py-8">
+                        <div className="text-4xl mb-4">📝</div>
+                        <h3 className="text-lg font-semibold text-white mb-2">No Wellness Entries Yet</h3>
+                        <p className="text-gray-400 mb-4">Start logging your wellness journey to see detailed insights.</p>
+                        <button
+                          onClick={() => setShowWellnessForm(true)}
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                        >
+                          Create First Entry
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {wellnessEntries.map((entry) => (
+                          <WellnessJourneyEntry
+                            key={entry.id}
+                            entry={entry}
+                            onDelete={handleDeleteWellnessEntry}
+                            onEdit={handleEditWellnessEntry}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                   
-                  {/* Deep Analytics */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
-                      <div className="p-5 border-b border-gray-700 bg-gray-800/50">
-                        <h2 className="text-xl font-bold text-white flex items-center">
-                          <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-2 rounded-lg mr-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                            </svg>
-                          </span>
-                          Pattern Analysis
-                        </h2>
+                  {/* Legacy Analytics (if mood data exists) */}
+                  {moods.length > 0 && (
+                    <>
+                      {/* Wellness Trends Overview */}
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2">
+                          <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+                            <div className="p-5 border-b border-gray-700 bg-gray-800/50">
+                              <h2 className="text-xl font-bold text-white flex items-center">
+                                <span className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-2 rounded-lg mr-3">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012-2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                  </svg>
+                                </span>
+                                Legacy Mood Trends
+                              </h2>
+                            </div>
+                            <div className="p-6">
+                              <MoodChart moods={moods} />
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <MoodStats moods={moods} />
+                        </div>
                       </div>
-                      <div className="p-6">
-                        <MoodAnalysis moods={moods} />
+                      
+                      {/* Deep Analytics */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+                          <div className="p-5 border-b border-gray-700 bg-gray-800/50">
+                            <h2 className="text-xl font-bold text-white flex items-center">
+                              <span className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-2 rounded-lg mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                              </span>
+                              Pattern Analysis
+                            </h2>
+                          </div>
+                          <div className="p-6">
+                            <MoodAnalysis moods={moods} />
+                          </div>
+                        </div>
+                        
+                        <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
+                          <div className="p-5 border-b border-gray-700 bg-gray-800/50">
+                            <h2 className="text-xl font-bold text-white flex items-center">
+                              <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-2 rounded-lg mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                              </span>
+                              Weekly Reflection
+                            </h2>
+                          </div>
+                          <div className="p-6">
+                            <WeeklyReflection moods={moods} habits={habits} goals={goals} />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
-                      <div className="p-5 border-b border-gray-700 bg-gray-800/50">
-                        <h2 className="text-xl font-bold text-white flex items-center">
-                          <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white p-2 rounded-lg mr-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                            </svg>
-                          </span>
-                          Weekly Reflection
-                        </h2>
-                      </div>
-                      <div className="p-6">
-                        <WeeklyReflection moods={moods} habits={habits} goals={goals} />
-                      </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
                   
                   {/* Wellness Achievements */}
                   <div className="bg-gray-800 rounded-xl shadow-lg overflow-hidden border border-gray-700">
@@ -1775,27 +1745,26 @@ function AppContent() {
             </div>
           )}
           
-          {/* Add the floating chat button */}
-          <FloatingChatButton 
-            moods={moods} 
-            habits={habits} 
-            goals={goals}
-          />
+
         </div>
       </div>
 
       {/* Settings Modal */}
       {isSettingsModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-            <Settings 
-              customMoodCategories={customMoodCategories}
-              onAddCustomMood={handleAddCustomMood}
-              onRemoveCustomMood={handleRemoveCustomMood}
-              onClose={() => setIsSettingsModalOpen(false)}
-            />
-          </div>
-        </div>
+        <Settings 
+          isOpen={isSettingsModalOpen}
+          onClose={() => setIsSettingsModalOpen(false)}
+          customMoodCategories={customMoodCategories}
+          onAddCustomMood={handleAddCustomMood}
+          onRemoveCustomMood={handleRemoveCustomMood}
+          user={user}
+          onLogout={handleLogout}
+          onUpdateUser={(updatedUser) => {
+            setUser(updatedUser);
+            // Update local storage or any other user state
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          }}
+        />
       )}
 
       {/* Insights Modal */}

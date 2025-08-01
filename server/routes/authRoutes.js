@@ -4,6 +4,9 @@ import {
   login, 
   getProfile, 
   updateProfile, 
+  changePassword,
+  deleteAccount,
+  exportData,
   verifyToken 
 } from '../controllers/authController.js';
 
@@ -25,5 +28,8 @@ router.post('/login', (req, res) => {
 // Protected routes (require authentication)
 router.get('/profile', verifyToken, getProfile);
 router.put('/profile', verifyToken, updateProfile);
+router.put('/change-password', verifyToken, changePassword);
+router.delete('/account', verifyToken, deleteAccount);
+router.get('/export-data', verifyToken, exportData);
 
 export default router;

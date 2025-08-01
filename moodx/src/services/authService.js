@@ -79,6 +79,44 @@ const updateProfile = async (profileData) => {
   }
 };
 
+// Change password
+const changePassword = async (currentPassword, newPassword) => {
+  try {
+    const response = await axios.put(`${API_URL}/change-password`, {
+      currentPassword,
+      newPassword
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Change password error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to change password');
+  }
+};
+
+// Delete account
+const deleteAccount = async (password) => {
+  try {
+    const response = await axios.delete(`${API_URL}/account`, {
+      data: { password }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Delete account error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete account');
+  }
+};
+
+// Export user data
+const exportData = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/export-data`);
+    return response.data;
+  } catch (error) {
+    console.error('Export data error:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export data');
+  }
+};
+
 // Check if user is authenticated
 const isAuthenticated = () => {
   const token = getToken();
@@ -91,6 +129,9 @@ export const authService = {
   logout,
   getProfile,
   updateProfile,
+  changePassword,
+  deleteAccount,
+  exportData,
   isAuthenticated,
   setAuthToken,
   getToken,

@@ -10,6 +10,7 @@ import progressRoutes from './routes/progressRoutes.js';
 import quoteRoutes from './routes/quoteRoutes.js';
 import todoRoutes from './routes/todoRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import wellnessJourneyRoutes from './routes/wellnessJourneyRoutes.js';
 import { seedResources } from './controllers/resourceController.js';
 import { initializeDatabase } from './utils/initDb.js';
 
@@ -39,6 +40,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/quotes', quoteRoutes);
 app.use('/api/todos', todoRoutes);
+app.use('/api/wellness-journey', wellnessJourneyRoutes);
 
 // Debug route to test if server is working
 app.get('/api/test', (req, res) => {

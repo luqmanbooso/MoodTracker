@@ -192,6 +192,152 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+// Change password
+export const changePassword = async (req, res) => {
+  try {
+    console.log('Change password request received');
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.userId;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: 'Please provide current and new password'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: 'New password must be at least 6 characters long'
+      });
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found'
+      });
+    }
+
+    // Verify current password
+    const isPasswordValid = await user.comparePassword(currentPassword);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+    console.log('Password changed successfully for user:', user.email);
+
+    res.json({
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({
+      message: 'Server error during password change',
+      error: error.message
+    });
+  }
+};
+
+// Delete account
+export const deleteAccount = async (req, res) => {
+  try {
+    console.log('Delete account request received');
+    const { password } = req.body;
+    const userId = req.userId;
+
+    // Validate input
+    if (!password) {
+      return res.status(400).json({
+        message: 'Please provide your password to confirm account deletion'
+      });
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found'
+      });
+    }
+
+    // Verify password
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        message: 'Password is incorrect'
+      });
+    }
+
+    // Delete user
+    await User.findByIdAndDelete(userId);
+    console.log('Account deleted successfully for user:', user.email);
+
+    res.json({
+      message: 'Account deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({
+      message: 'Server error during account deletion',
+      error: error.message
+    });
+  }
+};
+
+// Export user data
+export const exportData = async (req, res) => {
+  try {
+    console.log('Export data request received');
+    const userId = req.userId;
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found'
+      });
+    }
+
+    // Import models for data export
+    const Mood = (await import('../models/Mood.js')).default;
+    const Todo = (await import('../models/Todo.js')).default;
+    const Habit = (await import('../models/Habit.js')).default;
+    const Goal = (await import('../models/Goal.js')).default;
+    const Achievement = (await import('../models/Achievement.js')).default;
+
+    // Gather all user data
+    const userData = {
+      profile: user.toPublicJSON(),
+      moods: await Mood.find({ userId }).sort({ timestamp: -1 }),
+      todos: await Todo.find({ userId }).sort({ createdAt: -1 }),
+      habits: await Habit.find({ userId }).sort({ createdAt: -1 }),
+      goals: await Goal.find({ userId }).sort({ createdAt: -1 }),
+      achievements: await Achievement.find({ userId }).sort({ createdAt: -1 }),
+      exportDate: new Date().toISOString()
+    };
+
+    console.log('Data exported successfully for user:', user.email);
+
+    res.json({
+      message: 'Data exported successfully',
+      data: userData
+    });
+  } catch (error) {
+    console.error('Export data error:', error);
+    res.status(500).json({
+      message: 'Server error during data export',
+      error: error.message
+    });
+  }
+};
+
 // Verify token middleware
 export const verifyToken = async (req, res, next) => {
   try {
