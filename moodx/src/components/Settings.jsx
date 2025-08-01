@@ -213,18 +213,18 @@ const Settings = ({
           { id: 'moods', label: 'Custom Moods', icon: '😊' },
           { id: 'data', label: 'Data & Privacy', icon: '📊' }
         ].map(tab => (
-          <button 
+        <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center space-x-2 pb-3 px-4 whitespace-nowrap transition-colors ${
               activeTab === tab.id 
-                ? 'border-b-2 border-emerald-500 text-emerald-400'
+            ? 'border-b-2 border-emerald-500 text-emerald-400'
                 : 'text-gray-400 hover:text-gray-300'
             }`}
-          >
+        >
             <span>{tab.icon}</span>
             <span className="text-sm font-medium">{tab.label}</span>
-          </button>
+        </button>
         ))}
       </div>
       
@@ -507,8 +507,8 @@ const Settings = ({
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-2">
                   Confirm New Password
-                </label>
-                <input
+              </label>
+              <input
                   type="password"
                   id="confirmPassword"
                   value={securityData.confirmPassword}
@@ -540,9 +540,9 @@ const Settings = ({
               className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-800"
             >
               Delete Account
-            </button>
-          </div>
-        </div>
+                </button>
+              </div>
+            </div>
       )}
       
       {/* Custom Moods Settings */}
@@ -553,41 +553,41 @@ const Settings = ({
             
             <form onSubmit={handleAddMoodCategory} className="mb-6">
               <div className="flex gap-3">
-                <input
-                  type="text"
-                  value={newMoodCategory}
-                  onChange={(e) => setNewMoodCategory(e.target.value)}
+              <input
+                type="text"
+                value={newMoodCategory}
+                onChange={(e) => setNewMoodCategory(e.target.value)}
                   placeholder="E.g., Excited, Nostalgic, Grateful..."
                   className="flex-1 p-3 border border-gray-600 rounded-lg bg-gray-700 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-                <button
-                  type="submit"
+              />
+              <button
+                type="submit"
                   className="px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-gray-800"
-                >
-                  Add
-                </button>
-              </div>
-            </form>
-            
+              >
+                Add
+              </button>
+            </div>
+          </form>
+          
             <div className="max-h-60 overflow-y-auto">
-              {customMoodCategories.length > 0 ? (
+            {customMoodCategories.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {customMoodCategories.map((category) => (
+                {customMoodCategories.map((category) => (
                     <div key={category} className="flex items-center justify-between bg-gray-600 px-4 py-3 rounded-lg">
                       <span className="text-sm text-white font-medium">{category}</span>
-                      <button
-                        onClick={() => onRemoveCustomMood(category)}
+                    <button
+                      onClick={() => onRemoveCustomMood(category)}
                         className="text-gray-400 hover:text-red-400 focus:outline-none focus:text-red-400"
-                        aria-label={`Remove ${category}`}
-                      >
+                      aria-label={`Remove ${category}`}
+                    >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 111.414 1.414L11.414 10l4.293 4.293a1 1 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
                 <div className="text-center py-8">
                   <div className="text-4xl mb-2">😊</div>
                   <p className="text-gray-400">No custom moods added yet.</p>

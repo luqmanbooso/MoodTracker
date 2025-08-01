@@ -13,7 +13,9 @@ const MoodAssistant = ({ moods, habits, goals, setView }) => {
   const inputRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   };
 
   useEffect(() => {
@@ -184,21 +186,21 @@ Could we continue for just a few more minutes? Your mental health is important, 
   return (
     <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Header */}
-      <div className="flex-shrink-0 p-6 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+      <div className="flex-shrink-0 p-2 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-xl">🤖</span>
+            <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-base">🤖</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">AI Wellness Coach</h1>
-              <p className="text-sm text-slate-400">
+              <h1 className="text-lg font-bold text-white">AI Wellness Coach</h1>
+              <p className="text-xs text-slate-400">
                 {needsIntervention ? 'Your wellness ally - here to help' : 'Your personal mental health companion'}
               </p>
             </div>
             {needsIntervention && (
-              <div className="flex items-center space-x-2 bg-amber-500/20 border border-amber-500/30 rounded-lg px-3 py-1">
-                <span className="text-amber-400 text-sm">
+              <div className="flex items-center space-x-2 bg-amber-500/20 border border-amber-500/30 rounded-lg px-2 py-1">
+                <span className="text-amber-400 text-xs">
                   ⚠️ Intervention Active ({interactionCount}/5)
                 </span>
               </div>
@@ -206,21 +208,19 @@ Could we continue for just a few more minutes? Your mental health is important, 
           </div>
           <button
             onClick={() => setView('dashboard')}
-            className="p-3 rounded-xl bg-slate-700 hover:bg-slate-600 transition-colors"
+            className="p-1.5 rounded-md bg-slate-700 hover:bg-slate-600 transition-colors"
           >
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
       </div>
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex">
-          {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
-            {/* Messages Area */}
-            <div className="flex-1 overflow-y-auto p-6" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-1">
               {messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center text-slate-400">
@@ -230,14 +230,14 @@ Could we continue for just a few more minutes? Your mental health is important, 
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6 pb-4">
+                <div className="space-y-2 pb-1">
                   {messages.map((message) => (
                     <div key={message.id}>
                       <div
                         className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
-                          className={`max-w-2xl px-6 py-4 rounded-2xl shadow-lg ${
+                          className={`max-w-5xl px-3 py-2 rounded-md shadow-lg ${
                             message.type === 'user'
                               ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white'
                               : 'bg-slate-700/50 backdrop-blur-sm text-slate-100 border border-slate-600/50'
@@ -249,13 +249,13 @@ Could we continue for just a few more minutes? Your mental health is important, 
                       
                       {/* Suggestions - Always left-aligned */}
                       {message.suggestions && message.suggestions.length > 0 && (
-                        <div className="flex justify-start mt-3">
-                          <div className="flex flex-wrap gap-2 max-w-2xl">
+                        <div className="flex justify-start mt-1">
+                          <div className="flex flex-wrap gap-1 max-w-4xl">
                             {message.suggestions.slice(0, 4).map((suggestion, index) => (
                               <button
                                 key={index}
                                 onClick={() => handleSuggestionClick(suggestion)}
-                                className="text-sm bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-300 hover:text-emerald-200 rounded-lg px-4 py-2 transition-all duration-200 font-medium"
+                                className="text-xs bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-300 hover:text-emerald-200 rounded px-2 py-1 transition-all duration-200 font-medium"
                               >
                                 {suggestion}
                               </button>
@@ -268,7 +268,7 @@ Could we continue for just a few more minutes? Your mental health is important, 
                   
                   {isLoading && (
                     <div className="flex justify-start">
-                      <div className="bg-slate-700/50 backdrop-blur-sm text-slate-100 px-6 py-4 rounded-2xl border border-slate-600/50">
+                      <div className="bg-slate-700/50 backdrop-blur-sm text-slate-100 px-3 py-1.5 rounded border border-slate-600/50">
                         <div className="flex items-center space-x-3">
                           <div className="flex space-x-1">
                             <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce"></div>
@@ -286,41 +286,41 @@ Could we continue for just a few more minutes? Your mental health is important, 
             </div>
 
             {/* Quick Actions */}
-            <div className="p-4 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
-              <div className="flex flex-wrap gap-2">
+            <div className="p-1 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+              <div className="flex flex-wrap gap-1.5">
                 <button
                   onClick={() => handleQuickAction('stress')}
-                  className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 hover:border-red-500/50 text-red-300 hover:text-red-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                  className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 hover:border-red-500/50 text-red-300 hover:text-red-200 rounded-md transition-all duration-200 text-xs font-medium"
                 >
-                  😰 Stress Help
+                  😰 Stress
                 </button>
                 <button
                   onClick={() => handleQuickAction('sleep')}
-                  className="px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 hover:text-blue-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                  className="px-2 py-1 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 hover:border-blue-500/50 text-blue-300 hover:text-blue-200 rounded-md transition-all duration-200 text-xs font-medium"
                 >
-                  😴 Sleep Tips
+                  😴 Sleep
                 </button>
                 <button
                   onClick={() => handleQuickAction('motivation')}
-                  className="px-3 py-2 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 hover:border-yellow-500/50 text-yellow-300 hover:text-yellow-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                  className="px-2 py-1 bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-500/30 hover:border-yellow-500/50 text-yellow-300 hover:text-yellow-200 rounded-md transition-all duration-200 text-xs font-medium"
                 >
                   💪 Motivation
                 </button>
                 <button
                   onClick={() => handleQuickAction('anxiety')}
-                  className="px-3 py-2 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 hover:border-purple-500/50 text-purple-300 hover:text-purple-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                  className="px-2 py-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 hover:border-purple-500/50 text-purple-300 hover:text-purple-200 rounded-md transition-all duration-200 text-xs font-medium"
                 >
                   😰 Anxiety
                 </button>
                 <button
                   onClick={() => handleQuickAction('depression')}
-                  className="px-3 py-2 bg-gray-500/20 hover:bg-gray-500/30 border border-gray-500/30 hover:border-gray-500/50 text-gray-300 hover:text-gray-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                  className="px-2 py-1 bg-gray-500/20 hover:bg-gray-500/30 border border-gray-500/30 hover:border-gray-500/50 text-gray-300 hover:text-gray-200 rounded-md transition-all duration-200 text-xs font-medium"
                 >
                   😔 Depression
                 </button>
                 <button
                   onClick={() => handleQuickAction('self-care')}
-                  className="px-3 py-2 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/30 hover:border-pink-500/50 text-pink-300 hover:text-pink-200 rounded-lg transition-all duration-200 text-xs font-medium"
+                  className="px-2 py-1 bg-pink-500/20 hover:bg-pink-500/30 border border-pink-500/30 hover:border-pink-500/50 text-pink-300 hover:text-pink-200 rounded-md transition-all duration-200 text-xs font-medium"
                 >
                   🧘 Self-Care
                 </button>
@@ -328,8 +328,8 @@ Could we continue for just a few more minutes? Your mental health is important, 
             </div>
 
             {/* Input Area */}
-            <div className="p-4 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
-              <form onSubmit={handleSubmit} className="flex space-x-4">
+            <div className="p-1 border-t border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+              <form onSubmit={handleSubmit} className="flex space-x-3">
                 <div className="flex-1 relative">
                   <input
                     ref={inputRef}
@@ -337,22 +337,21 @@ Could we continue for just a few more minutes? Your mental health is important, 
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     placeholder={needsIntervention ? "I'm here to help - what do you need?" : "Ask me anything about your wellness..."}
-                    className="w-full px-6 py-4 bg-slate-700/50 border border-slate-600/50 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all duration-200 backdrop-blur-sm"
+                    className="w-full px-2 py-1.5 bg-slate-700/50 border border-slate-600/50 rounded text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all duration-200 backdrop-blur-sm"
                     disabled={isLoading}
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={!inputMessage.trim() || isLoading}
-                  className="px-8 py-4 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium rounded-2xl transition-all duration-200 hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg"
+                  className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-slate-600 disabled:to-slate-700 text-white font-medium rounded transition-all duration-200 hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed shadow-lg"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                 </button>
               </form>
             </div>
-          </div>
         </div>
       </div>
     );
